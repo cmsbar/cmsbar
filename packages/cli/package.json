@@ -1,0 +1,15 @@
+{
+  "name": "cmsbar",
+  "version": "0.1.0",
+  "description": "CMSBar installer - copies the Git-as-CMS bar into your Next.js repo. You own the code.",
+  "type": "module",
+  "bin": {
+    "cmsbar": "bin/cmsbar.mjs"
+  },
+  "files": ["bin", "../../template"],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": ["cms", "git", "nextjs", "inline-editing", "github"],
+  "license": "MIT"
+}
