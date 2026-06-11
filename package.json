@@ -3,6 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "description": "CMSBar - the Git-as-CMS bar you drop into your own codebase.",
+  "author": "Mario Ivančić",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cmsbar/cmsbar.git"
+  },
+  "homepage": "https://github.com/cmsbar/cmsbar#readme",
+  "bugs": {
+    "url": "https://github.com/cmsbar/cmsbar/issues"
+  },
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
