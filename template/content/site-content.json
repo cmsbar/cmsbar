@@ -1,0 +1,30 @@
+{
+  "site": {
+    "name": "My Site",
+    "description": "A site edited in place with CMSBar."
+  },
+  "launch": {
+    "mode": "live"
+  },
+  "favicon": "",
+  "pageMeta": {
+    "home": {
+      "title": "My Site",
+      "description": "A site edited in place with CMSBar.",
+      "ogImage": "",
+      "ogTitle": "",
+      "ogDescription": "",
+      "canonical": "",
+      "noindex": false
+    }
+  },
+  "nav": [{ "name": "Home", "href": "/" }],
+  "home": {
+    "hero": {
+      "badge": "Now editable in place",
+      "headline": "Click anything. Change it. Ship it as a PR.",
+      "subtitle": "This text is editable - log in at /cmsbar/login and click it.",
+      "cta": "Get started"
+    }
+  }
+}

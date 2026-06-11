@@ -1,0 +1,35 @@
+/* ── CMSBar theme ────────────────────────────────────────────────────────────
+   Every brand-colored piece of CMSBar chrome reads these variables. Override
+   any of them in your own globals.css (after this import) to re-theme the
+   editor to your brand - no component edits needed.
+
+   Import once in app/globals.css:  @import "../styles/cmsbar.css";           */
+
+:root {
+  /* Primary accent: action buttons, page-local editable outlines. */
+  --cmsbar-accent: #db2777; /* pink-600 */
+  --cmsbar-accent-strong: #be185d; /* pink-700 - hover */
+  --cmsbar-accent-soft: rgba(219, 39, 119, 0.16); /* badges, tints */
+  --cmsbar-accent-text: #fbcfe8; /* badge text on dark chrome */
+  --cmsbar-ring: rgba(244, 114, 182, 0.6); /* idle editable outline */
+
+  /* Shared-element highlight: content that appears on more than one page. */
+  --cmsbar-shared: #fbbf24; /* amber-400 */
+  --cmsbar-shared-strong: #f59e0b; /* amber-500 */
+  --cmsbar-shared-soft: rgba(251, 191, 36, 0.12);
+  --cmsbar-shared-text: #fde68a;
+
+  /* Secondary/info accent: selected states in drawers, info text. */
+  --cmsbar-info: #2563eb; /* blue-600 */
+  --cmsbar-info-soft: rgba(37, 99, 235, 0.08);
+
+  /* Icon accent in editable info lists. */
+  --cmsbar-icon: #f59e0b;
+}
+
+/* Lights up every shared element when the bar's "Shared" toggle is on. */
+body.cms-highlight-shared [data-cms-shared="true"] {
+  outline: 2px dashed var(--cmsbar-shared-strong);
+  outline-offset: 2px;
+  background: var(--cmsbar-shared-soft);
+}
