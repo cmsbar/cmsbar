@@ -7,8 +7,12 @@
 > mirror, media allowlists - integration harness still open), Phase 4 (CLI `init`) has a
 > **working v1**, and Phase 3 (storage adapter) has the `CmsBackend` interface defined
 > (`lib/cmsbar/backend/types.ts`) with GitHub as the reference implementation - routes do
-> not consume the interface yet. KEA itself still runs the original in-tree CMS; folding
-> KEA onto the extracted template is the next dogfooding milestone.
+> not consume the interface yet. **Update (same day):** KEA has been migrated onto the
+> extracted template (dogfooding milestone done) - it now runs components/cmsbar +
+> lib/cmsbar with its own `cms.config.ts`, brand CSS-variable overrides, and marked
+> KEA customizations. A **Cloud Studio MVP** also exists at `/var/www/CMSBarCloud`
+> (Phase 9 v0.1): magic-link admin auth, encrypted PAT custody, cross-project approval
+> dashboard with label-toggle approve + squash-merge. No billing yet, by design.
 
 ## Context
 
