@@ -3,15 +3,31 @@ import { PREVIEW_LS_KEY } from "@/lib/cmsbar/keys";
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { cmsConfig } from "@/cms.config";
 import { useCms } from "./ContentProvider";
 import { VersionsDialog } from "./VersionsDialog";
 import { PageMetaDrawer } from "./PageMetaDrawer";
 import { SettingsDrawer } from "./SettingsDrawer";
 import { IssuesButton } from "./IssuesButton";
+import { CmsTour, TOUR_OPEN_EVENT } from "./CmsTour";
 import { pageNameForPath } from "./pageName";
 import { cn } from "@/lib/cmsbar/utils";
 
 const DIVIDER = <span className="h-4 w-px bg-white/20" />;
+
+// Guided tour is opt-in: sites without `tour` config get no button, no overlay.
+const TOUR_ENABLED = (cmsConfig.tour?.steps.length ?? 0) > 0;
+
+const TourButton = () =>
+  TOUR_ENABLED ? (
+    <button
+      onClick={() => window.dispatchEvent(new CustomEvent(TOUR_OPEN_EVENT))}
+      className="rounded-full bg-white/10 hover:bg-white/20 text-xs px-3 py-1"
+      title="Replay the guided tour"
+    >
+      ✦ Guide
+    </button>
+  ) : null;
 
 export function CmsBar() {
   const {
@@ -208,6 +224,9 @@ export function CmsBar() {
             }}
           />
         )}
+        {/* Saving a draft lands here (preview); the tour remounts and
+            resumes its step from sessionStorage, so render it here too. */}
+        {TOUR_ENABLED && <CmsTour />}
       </>
     );
   }
@@ -216,7 +235,10 @@ export function CmsBar() {
   if (!cms.draft) {
     return (
       <>
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 rounded-full bg-slate-900/95 text-white px-4 py-2 shadow-2xl backdrop-blur text-sm">
+        <div
+          data-cms-bar
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 rounded-full bg-slate-900/95 text-white px-4 py-2 shadow-2xl backdrop-blur text-sm"
+        >
           <span className="font-medium">CMSBar</span>
           <span className="rounded-full bg-emerald-500/20 text-emerald-200 px-2.5 py-0.5 text-xs font-medium">
             Live site
@@ -236,6 +258,7 @@ export function CmsBar() {
           >
             Versions
           </button>
+          <TourButton />
           {DIVIDER}
           <button
             onClick={() => setMetaOpen(true)}
@@ -279,6 +302,7 @@ export function CmsBar() {
             canEdit={false}
           />
         )}
+        {TOUR_ENABLED && <CmsTour />}
       </>
     );
   }
@@ -335,7 +359,10 @@ export function CmsBar() {
           </button>
         </div>
       )}
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 rounded-full bg-slate-900/95 text-white px-4 py-2 shadow-2xl backdrop-blur text-sm">
+      <div
+        data-cms-bar
+        className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 rounded-full bg-slate-900/95 text-white px-4 py-2 shadow-2xl backdrop-blur text-sm"
+      >
         <span className="font-medium">CMSBar</span>
         <span
           className={cn(
@@ -426,6 +453,7 @@ export function CmsBar() {
         >
           🔗 Shared
         </button>
+        <TourButton />
 
         {DIVIDER}
 
@@ -458,6 +486,7 @@ export function CmsBar() {
           canEdit={!approved}
         />
       )}
+      {TOUR_ENABLED && <CmsTour />}
     </>
   );
 }
@@ -497,7 +526,10 @@ function PreviewBanner({
           Exit preview
         </button>
       </div>
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 rounded-full bg-slate-900/95 text-white px-4 py-2 shadow-2xl backdrop-blur text-sm">
+      <div
+        data-cms-bar
+        className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 rounded-full bg-slate-900/95 text-white px-4 py-2 shadow-2xl backdrop-blur text-sm"
+      >
         <span className="font-medium">CMSBar</span>
         <span className="rounded-full bg-amber-500/20 text-amber-200 px-2.5 py-0.5 text-xs font-medium">
           Preview

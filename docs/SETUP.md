@@ -291,6 +291,7 @@ import { RichText } from "@/components/cms/RichText";
 - Stores HTML; sanitized on save to `<b> <i> <u> <strong> <em> <br> <span> <div> <p> <h1>-<h4> <ul> <ol> <li>` only.
 - **Hand** toolbar button wraps the selection in `<span class="font-hand">…</span>` (toggle to remove).
 - Block controls only render when the editor root is `<div>` / `<article>` / `<section>` - keeps inline usages from accidentally producing headings.
+- Block editors automatically get the theme's **`cmsbar-prose`** class (`styles/cmsbar.css`): default heading sizes (h1-h4), disc/decimal list markers, underlined links and paragraph spacing that survive Tailwind preflight - so every toolbar action produces visible output out of the box. Two theme variables tune it: `--cmsbar-prose-heading-weight` (default `700`) and `--cmsbar-prose-link` (link color, defaults to `--cmsbar-info`). The defaults are declared in `@layer base`, which loses to un-layered site CSS, to `@layer components`/`@layer utilities`, and to later `@layer base` rules alike - so any site rule of equal specificity (e.g. `.cms-prose h2`, layered or not) overrides them, while they still beat Tailwind preflight.
 - Wrap the rendered block in **`cms-prose`** to get default heading/list visuals (Tailwind v4 ships without `@tailwindcss/typography`, so we define this class ourselves in `globals.css`). Add **`cms-prose-checks`** plus an inline `style={{ "--bullet-color": "..." }}` to swap disc bullets for filled-check icons.
 
 ### Editable structured list (icon + label + value)
@@ -307,6 +308,30 @@ import { EditableInfoList } from "@/components/cms/EditableInfoList";
 - JSON shape: `{ icon: string; label: string; value: string }[]`. Whole array writes back on every change (add, delete, edit, icon swap).
 - Icons come from `src/components/cms/icon-registry.ts`, a curated subset of `lucide-react` (only icons already used elsewhere in the app, so the bundle doesn't grow and the visual vocabulary stays consistent). Add to that file's `ICONS` map to expand the picker.
 - In edit mode: click the icon chip → grid popover; click label / value → inline contentEditable; hover row → `×` delete; **+ Dodaj stavku** at the end appends a row.
+
+### Guided tour (onboarding)
+
+```ts
+// cms.config.ts
+tour: {
+  autoStart: true, // open once per browser for authenticated editors
+  steps: [
+    { id: "welcome", title: "Welcome", body: "…" }, // no target → centered card
+    {
+      id: "bar",
+      title: "The CMS bar",
+      body: "…",
+      target: "[data-cms-bar]", // CSS selector to spotlight
+      placement: "top", // "top" | "bottom" | "left" | "right" (default "bottom")
+    },
+  ],
+},
+```
+
+- Opt-in: without `tour` config there is no button and no overlay.
+- The bar gains a **✦ Guide** pill that (re)starts the tour; `<CmsTour/>` spotlights each step's `target` and dims the rest of the page. Targets missing from the DOM (e.g. edit-mode-only UI while no draft is open) fall back to a centered card, so write step bodies to tell the user what to click.
+- "Done"/"Skip tour" set `cmsbar:tour-done:<namespace>` in localStorage, which gates `autoStart`; the current step survives the page reloads that "New draft" causes (sessionStorage).
+- Any code can open it: `window.dispatchEvent(new CustomEvent("cmsbar:tour:open"))`.
 
 ### Adding a new field
 
