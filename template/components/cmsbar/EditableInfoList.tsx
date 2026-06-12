@@ -1,7 +1,7 @@
 "use client";
 
 import { createElement, useEffect, useRef, useState } from "react";
-import { Plus, X } from "lucide-react";
+import { GripVertical, Plus, X } from "lucide-react";
 import { useCms } from "./ContentProvider";
 import { ICON_NAMES, getIcon } from "./icon-registry";
 import { cn } from "@/lib/cmsbar/utils";
@@ -33,7 +33,27 @@ export function EditableInfoList({
   const { get, editMode, addEdit } = useCms();
   const items = ((get(path) as Item[] | undefined) ?? []) as Item[];
 
+  // Drag-to-reorder state (editor only). Declared unconditionally so hook order
+  // is stable across the editMode/!editMode branches below.
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+
   const update = (next: Item[]) => addEdit(path, next);
+
+  const move = (from: number, to: number) => {
+    if (
+      from === to ||
+      from < 0 ||
+      to < 0 ||
+      from >= items.length ||
+      to >= items.length
+    )
+      return;
+    const next = items.slice();
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    update(next);
+  };
 
   const resolvedIconSize = iconSize ?? (variant === "footer" ? 18 : 24);
 
@@ -114,6 +134,21 @@ export function EditableInfoList({
           valueClass={valueClass}
           labelClass={labelClass}
           swapOrder={swapOrder}
+          dragging={dragIndex === i}
+          dragOver={overIndex === i && dragIndex !== null && dragIndex !== i}
+          onDragStartRow={() => setDragIndex(i)}
+          onDragOverRow={() => {
+            if (overIndex !== i) setOverIndex(i);
+          }}
+          onDropRow={() => {
+            if (dragIndex !== null) move(dragIndex, i);
+            setDragIndex(null);
+            setOverIndex(null);
+          }}
+          onDragEndRow={() => {
+            setDragIndex(null);
+            setOverIndex(null);
+          }}
           onChange={(patch) => {
             const next = items.slice();
             next[i] = { ...next[i], ...patch };
@@ -129,14 +164,11 @@ export function EditableInfoList({
       <button
         type="button"
         onClick={() =>
-          update([
-            ...items,
-            { icon: "Clock", label: "Naslov", value: "Vrijednost" },
-          ])
+          update([...items, { icon: "Clock", label: "Label", value: "Value" }])
         }
         className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-slate-300 hover:border-[var(--cmsbar-info)] hover:text-[var(--cmsbar-info)] text-slate-500 rounded-xl py-3 text-sm font-medium transition-colors"
       >
-        <Plus size={16} /> Dodaj stavku
+        <Plus size={16} /> Add item
       </button>
     </div>
   );
@@ -149,6 +181,12 @@ function EditableRow({
   valueClass,
   labelClass,
   swapOrder,
+  dragging,
+  dragOver,
+  onDragStartRow,
+  onDragOverRow,
+  onDropRow,
+  onDragEndRow,
   onChange,
   onDelete,
 }: {
@@ -158,6 +196,12 @@ function EditableRow({
   valueClass?: string;
   labelClass?: string;
   swapOrder?: boolean;
+  dragging?: boolean;
+  dragOver?: boolean;
+  onDragStartRow: () => void;
+  onDragOverRow: () => void;
+  onDropRow: () => void;
+  onDragEndRow: () => void;
   onChange: (patch: Partial<Item>) => void;
   onDelete: () => void;
 }) {
@@ -175,7 +219,32 @@ function EditableRow({
   }, [pickerOpen]);
 
   return (
-    <div className="relative flex items-start gap-4 group rounded-lg ring-1 ring-dashed ring-blue-300/50 p-1">
+    <div
+      onDragOver={(e) => {
+        e.preventDefault();
+        onDragOverRow();
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        onDropRow();
+      }}
+      className={cn(
+        "relative flex items-start gap-3 group rounded-lg ring-1 ring-dashed ring-blue-300/50 p-1 transition-colors",
+        dragging && "opacity-40",
+        dragOver && "ring-2 ring-[var(--cmsbar-info)] bg-[var(--cmsbar-info)]/5",
+      )}
+    >
+      <button
+        type="button"
+        draggable
+        onDragStart={onDragStartRow}
+        onDragEnd={onDragEndRow}
+        title="Drag to reorder"
+        aria-label="Drag to reorder"
+        className="shrink-0 self-center cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 touch-none"
+      >
+        <GripVertical size={16} />
+      </button>
       <div className="relative">
         <button
           type="button"
@@ -185,7 +254,7 @@ function EditableRow({
             iconBoxClass,
             pickerOpen && "ring-2 ring-[var(--cmsbar-info)]",
           )}
-          title="Promijeni ikonu"
+          title="Change icon"
         >
           {createElement(getIcon(item.icon), { size: iconSize })}
           <span className="absolute -bottom-1 -right-1 bg-[var(--cmsbar-info)] text-white rounded-full w-4 h-4 inline-flex items-center justify-center text-[9px] leading-none">
@@ -198,7 +267,7 @@ function EditableRow({
             className="absolute z-20 top-full mt-2 left-0 bg-slate-900 text-white p-3 rounded-xl shadow-2xl w-64"
           >
             <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-2">
-              Odaberi ikonu
+              Choose an icon
             </p>
             <div className="grid grid-cols-6 gap-1">
               {ICON_NAMES.map((name) => (
@@ -257,7 +326,7 @@ function EditableRow({
       <button
         type="button"
         onClick={onDelete}
-        title="Obriši stavku"
+        title="Remove item"
         className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-2 -right-2 bg-white text-slate-500 hover:text-red-500 rounded-full border border-slate-200 w-6 h-6 inline-flex items-center justify-center shadow-sm"
       >
         <X size={14} />
