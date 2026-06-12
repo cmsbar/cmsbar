@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 import { useCms } from "./ContentProvider";
+import { FocalPointOverlay, parsePos } from "./FocalPoint";
 import { Portal } from "./Portal";
 import { isSharedPath } from "./shared-paths";
 import { cn } from "@/lib/cmsbar/utils";
@@ -117,6 +118,8 @@ function detectKind(value: string): Kind {
   const v = value.trim();
   if (!v) return "empty";
   if (v.startsWith("<")) return "html";
+  if (/^data:image\//i.test(v)) return "image";
+  if (/^data:video\//i.test(v)) return "video";
   if (/^https?:\/\//i.test(v)) return "embed";
   if (/\.(mp4|webm|ogg|mov|m4v)$/i.test(v)) return "video";
   if (/\.(jpe?g|png|webp|gif|svg)$/i.test(v)) return "image";
@@ -153,15 +156,28 @@ export function EditableMedia({
   videoMode = "cover",
   videoAutoplay = false,
 }: Props) {
-  const { get, editMode, cms, addEdit } = useCms();
+  const { get, editMode, cms, addEdit, pendingEdits } = useCms();
   const raw = (get(path) as string | undefined) ?? "";
   const branch = cms.preview?.branch ?? cms.draft?.branch;
   const src =
     raw.startsWith("blob:") || raw.startsWith("data:")
       ? raw
       : resolveForBranch(raw, branch);
-  const kind = detectKind(raw);
+  // blob: preview URLs carry no extension, so a fresh upload would detect as
+  // "empty" and vanish until saved. Classify it via the staged public path
+  // (the pending edit for this slot) instead; the blob stays the <img>/<video> src.
+  const stagedValue = raw.startsWith("blob:")
+    ? (pendingEdits.find((e) => e.path === path)?.value as string | undefined)
+    : undefined;
+  const kind = detectKind(stagedValue ?? raw);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [repositioning, setRepositioning] = useState(false);
+
+  // Focal point for image media - stored at a sibling content key ("<path>__pos")
+  // and applied as CSS object-position. Stale values left behind when the slot
+  // switches to video/embed are harmless and revive if an image returns.
+  const positionPath = `${path}__pos`;
+  const objectPosition = (get(positionPath) as string | undefined) || undefined;
 
   const shared = isSharedPath(path);
 
@@ -181,6 +197,7 @@ export function EditableMedia({
           src={src}
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
+          style={objectPosition ? { objectPosition } : undefined}
         />
       )}
       {kind === "video" &&
@@ -214,6 +231,33 @@ export function EditableMedia({
         </div>
       )}
 
+      {/* Click overlay to set the focal point (object-position) - images only;
+          other media kinds simply don't render it. */}
+      {editMode && kind === "image" && repositioning && (
+        <FocalPointOverlay
+          position={parsePos(objectPosition)}
+          onSet={(x, y) => addEdit(positionPath, `${x}% ${y}%`)}
+        />
+      )}
+      {editMode && kind === "image" && (
+        <button
+          type="button"
+          data-cms-ui
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setRepositioning((v) => !v);
+          }}
+          className={cn(
+            "absolute bottom-2 left-2 z-[96] pointer-events-auto rounded-full text-xs font-medium px-3 py-1.5 shadow-md",
+            repositioning
+              ? "bg-white text-[var(--cmsbar-accent)] hover:bg-slate-100"
+              : "bg-[var(--cmsbar-accent)] text-white hover:bg-[var(--cmsbar-accent-strong)]",
+          )}
+        >
+          {repositioning ? "Done" : "⊹ Reposition"}
+        </button>
+      )}
       {editMode && (
         <button
           type="button"
@@ -293,7 +337,7 @@ function AutoplayVideo({
       <button
         type="button"
         onClick={toggleMute}
-        aria-label={muted ? "Uključi zvuk" : "Isključi zvuk"}
+        aria-label={muted ? "Unmute" : "Mute"}
         className="absolute top-3 left-3 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/80"
       >
         {muted ? (

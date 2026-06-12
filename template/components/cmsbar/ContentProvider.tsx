@@ -438,6 +438,12 @@ export function ContentProvider({
       setPendingUploads([]);
       setPendingFolders([]);
       setPendingDeletes([]);
+      // Drop blob previews: the files are committed now, so the override
+      // paths resolve through the branch proxy. Keeping extension-less blob
+      // URLs here would leave media slots unable to classify their content.
+      for (const url of blobRefs.current) URL.revokeObjectURL(url);
+      blobRefs.current.clear();
+      setBlobOverrides({});
       if (draftBranch) void clearBranch(draftBranch);
       if (newDraftPatch) {
         setCmsState((s) =>
