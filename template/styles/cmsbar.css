@@ -25,6 +25,10 @@
 
   /* Icon accent in editable info lists. */
   --cmsbar-icon: #f59e0b;
+
+  /* Rich-text content defaults (.cmsbar-prose below). */
+  --cmsbar-prose-heading-weight: 700;
+  --cmsbar-prose-link: var(--cmsbar-info);
 }
 
 /* Lights up every shared element when the bar's "Shared" toggle is on. */
@@ -32,4 +36,79 @@ body.cms-highlight-shared [data-cms-shared="true"] {
   outline: 2px dashed var(--cmsbar-shared-strong);
   outline-offset: 2px;
   background: var(--cmsbar-shared-soft);
+}
+
+/* ── Rich-text content defaults ──────────────────────────────────────────────
+   Tailwind preflight flattens headings, lists and links to plain text, so
+   without these every block-level toolbar action (H2-H4, lists, links) is
+   invisible on sites that never styled those tags. Block-level <RichText>
+   editors (as="div" / "article" / "section") add .cmsbar-prose automatically.
+   Declared in @layer base (Tailwind v4 orders it before components/utilities,
+   and un-layered CSS beats every layer), so ANY site rule - un-layered, in
+   @layer components, or later in @layer base - overrides these defaults,
+   while they still beat preflight (same layer, imported after tailwindcss). */
+
+@layer base {
+  .cmsbar-prose h1,
+  .cmsbar-prose h2,
+  .cmsbar-prose h3,
+  .cmsbar-prose h4 {
+    font-weight: var(--cmsbar-prose-heading-weight, 700);
+    margin: 1.2em 0 0.5em;
+  }
+  .cmsbar-prose h1 {
+    font-size: 2em;
+    line-height: 1.15;
+  }
+  .cmsbar-prose h2 {
+    font-size: 1.5em;
+    line-height: 1.2;
+  }
+  .cmsbar-prose h3 {
+    font-size: 1.25em;
+    line-height: 1.3;
+  }
+  .cmsbar-prose h4 {
+    font-size: 1.1em;
+    line-height: 1.35;
+  }
+  .cmsbar-prose p {
+    margin: 0 0 0.9em;
+  }
+  .cmsbar-prose ul,
+  .cmsbar-prose ol {
+    padding-left: 1.4em;
+    margin: 0 0 0.9em;
+  }
+  .cmsbar-prose ul {
+    list-style: disc;
+  }
+  .cmsbar-prose ol {
+    list-style: decimal;
+  }
+  .cmsbar-prose li {
+    margin: 0.25em 0;
+  }
+  .cmsbar-prose a {
+    color: var(--cmsbar-prose-link, var(--cmsbar-info));
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .cmsbar-prose strong,
+  .cmsbar-prose b {
+    font-weight: 700;
+  }
+  .cmsbar-prose em,
+  .cmsbar-prose i {
+    font-style: italic;
+  }
+  .cmsbar-prose u {
+    text-decoration: underline;
+  }
+  .cmsbar-prose > :first-child {
+    margin-top: 0;
+  }
+  .cmsbar-prose > :last-child {
+    margin-bottom: 0;
+  }
 }

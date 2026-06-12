@@ -27,6 +27,11 @@ type Props = {
 // configured per-project (empty string disables the button entirely).
 const HAND_CLASS = cmsConfig.richText?.decorClass ?? "";
 
+// Block-level editor roots get the theme's .cmsbar-prose content defaults
+// (headings, lists, links survive Tailwind preflight). Must stay in sync with
+// the Toolbar's isBlockRoot check, which gates the block-format buttons.
+const BLOCK_TAGS = new Set(["div", "article", "section"]);
+
 function applyClassToSelection(root: HTMLElement, className: string) {
   const sel = window.getSelection();
   if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
@@ -171,6 +176,7 @@ export function RichText({
   const value = (get(path) as string | undefined) ?? fallback ?? "";
   const ref = useRef<HTMLElement | null>(null);
   const [focused, setFocused] = useState(false);
+  const isBlock = BLOCK_TAGS.has(as);
 
   const lastSeenRef = useRef<string>(value);
 
@@ -178,6 +184,9 @@ export function RichText({
     if (!editMode) return;
     if (!ref.current) return;
     if (document.activeElement === ref.current) return;
+    // Focus parked in the toolbar (e.g. the link input) means an editing
+    // session is live; rewriting innerHTML would detach the saved selection.
+    if (document.activeElement?.closest("[data-cms-toolbar]")) return;
     if (ref.current.innerHTML !== value) {
       ref.current.innerHTML = value;
     }
@@ -189,6 +198,7 @@ export function RichText({
     if (!ref.current) return;
     if (ref.current.innerHTML === value) return;
     if (document.activeElement === ref.current) return;
+    if (document.activeElement?.closest("[data-cms-toolbar]")) return;
     ref.current.innerHTML = value;
     lastSeenRef.current = value;
   }, [editMode, value]);
@@ -202,7 +212,7 @@ export function RichText({
 
   if (!editMode) {
     return createElement(as, {
-      className,
+      className: isBlock ? cn("cmsbar-prose", className) : className,
       ...rest,
       ...(cms.authenticated && {
         "data-cms-path": path,
@@ -240,6 +250,7 @@ export function RichText({
         ? "ring-2 ring-[var(--cmsbar-shared)] bg-[var(--cmsbar-shared-soft)] hover:ring-[var(--cmsbar-shared-strong)] focus:ring-2 focus:ring-[var(--cmsbar-shared-strong)]"
         : "ring-1 ring-dashed ring-[var(--cmsbar-ring)] hover:ring-[var(--cmsbar-accent)] focus:ring-2 focus:ring-[var(--cmsbar-accent)]",
       "px-0.5",
+      isBlock && "cmsbar-prose",
       className,
     ),
     onClickCapture: swallow,
@@ -252,6 +263,10 @@ export function RichText({
       }
     },
     onBlur: (e) => {
+      // Always stage - even when focus moves into the toolbar (link input).
+      // The resync effects above skip while the toolbar holds focus, so
+      // staging here can no longer rewrite innerHTML mid-link-edit and
+      // detach the toolbar's saved selection range.
       const html = (e.currentTarget as HTMLElement).innerHTML;
       stage(html);
       setTimeout(() => {
@@ -266,7 +281,13 @@ export function RichText({
       {createElement(as, editProps)}
       {focused && (
         <Portal>
-          <Toolbar editorRef={ref} />
+          <Toolbar
+            editorRef={ref}
+            onAbandon={() => {
+              if (ref.current) stage(ref.current.innerHTML);
+              setFocused(false);
+            }}
+          />
         </Portal>
       )}
     </>
@@ -275,13 +296,26 @@ export function RichText({
 
 export function RichTextToolbar({
   editorRef,
+  onAbandon,
 }: {
   editorRef: RefObject<HTMLElement | null>;
+  onAbandon?: () => void;
 }) {
-  return <Toolbar editorRef={editorRef} />;
+  return <Toolbar editorRef={editorRef} onAbandon={onAbandon} />;
 }
 
-function Toolbar({ editorRef }: { editorRef: RefObject<HTMLElement | null> }) {
+function Toolbar({
+  editorRef,
+  onAbandon,
+}: {
+  editorRef: RefObject<HTMLElement | null>;
+  /**
+   * Focus left the toolbar for somewhere outside the editor too. The editor's
+   * own blur fired earlier (skipped, focus was toolbar-bound) - the host must
+   * stage its content now or edits made before opening the panel are lost.
+   */
+  onAbandon?: () => void;
+}) {
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const [active, setActive] = useState({
     bold: false,
@@ -399,6 +433,17 @@ function Toolbar({ editorRef }: { editorRef: RefObject<HTMLElement | null> }) {
     const root = editorRef.current;
     if (!root) return;
 
+    // If a re-render rewrote the editor's innerHTML since the range was
+    // saved, its nodes are detached; restoring it would give a collapsed
+    // selection and silently skip createLink. Close the panel instead.
+    if (
+      savedRangeRef.current &&
+      !savedRangeRef.current.startContainer.isConnected
+    ) {
+      setLinkOpen(false);
+      return;
+    }
+
     root.focus();
     const sel = window.getSelection();
     if (sel && savedRangeRef.current) {
@@ -451,6 +496,23 @@ function Toolbar({ editorRef }: { editorRef: RefObject<HTMLElement | null> }) {
       }}
       className="z-[120] flex flex-col rounded-lg bg-slate-900/95 text-white shadow-lg backdrop-blur"
       onMouseDown={(e) => e.preventDefault()}
+      onBlur={(e) => {
+        // Focus left the toolbar (link input / tab-out) for somewhere outside
+        // the editor: the editing session is over. Close the panel and let
+        // the host stage + dismiss, instead of orphaning a floating toolbar.
+        const next = e.relatedTarget as HTMLElement | null;
+        const root = editorRef.current;
+        if (
+          next &&
+          (e.currentTarget.contains(next) ||
+            next === root ||
+            root?.contains(next))
+        ) {
+          return;
+        }
+        setLinkOpen(false);
+        onAbandon?.();
+      }}
     >
       <div className="flex items-center gap-0.5 px-1 py-1">
         <button
@@ -600,6 +662,10 @@ function Toolbar({ editorRef }: { editorRef: RefObject<HTMLElement | null> }) {
               }
               if (e.key === "Escape") {
                 e.preventDefault();
+                // Refocus the editor BEFORE the input unmounts - an element
+                // removed while focused fires no blur, which would orphan the
+                // toolbar and skip the container's abandon handling.
+                editorRef.current?.focus();
                 setLinkOpen(false);
               }
             }}

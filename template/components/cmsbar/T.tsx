@@ -41,6 +41,9 @@ export function T({
     if (!editMode) return;
     if (!ref.current) return;
     if (document.activeElement === ref.current) return;
+    // Focus parked in the toolbar (e.g. the link input) means an editing
+    // session is live; rewriting innerHTML would detach the saved selection.
+    if (document.activeElement?.closest("[data-cms-toolbar]")) return;
     if (ref.current.innerHTML !== value) {
       ref.current.innerHTML = value;
     }
@@ -52,6 +55,7 @@ export function T({
     if (!ref.current) return;
     if (ref.current.innerHTML === value) return;
     if (document.activeElement === ref.current) return;
+    if (document.activeElement?.closest("[data-cms-toolbar]")) return;
     ref.current.innerHTML = value;
     lastSeenRef.current = value;
   }, [editMode, value]);
@@ -128,7 +132,13 @@ export function T({
       {createElement(as, editProps)}
       {focused && (
         <Portal>
-          <RichTextToolbar editorRef={ref} />
+          <RichTextToolbar
+            editorRef={ref}
+            onAbandon={() => {
+              if (ref.current) stage(ref.current.innerHTML);
+              setFocused(false);
+            }}
+          />
         </Portal>
       )}
     </>
