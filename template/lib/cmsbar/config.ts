@@ -14,6 +14,24 @@ export type CmsPage = {
   label: string;
 };
 
+export type CmsTourStep = {
+  /** Stable id for the step (used as the React key). */
+  id: string;
+  /** Short heading shown at the top of the tour card. */
+  title: string;
+  /** One or two friendly sentences of plain text. */
+  body: string;
+  /**
+   * CSS selector of the element to spotlight (e.g.
+   * '[data-cms-path="hero.title"]'). Omitted - or absent from the DOM, as
+   * with edit-mode-only UI while no draft is open - the card renders centered
+   * with no spotlight, so write the body to tell the user what to click.
+   */
+  target?: string;
+  /** Side of the target to place the card on. Default "bottom". */
+  placement?: "top" | "bottom" | "left" | "right";
+};
+
 export type CmsConfig = {
   /**
    * Short machine-safe id for this site (lowercase, no spaces). Namespaces
@@ -53,6 +71,16 @@ export type CmsConfig = {
      * toolbar button and strips the class on sanitize.
      */
     decorClass?: string;
+  };
+  tour?: {
+    /** Ordered onboarding steps walked through by `<CmsTour/>`. */
+    steps: CmsTourStep[];
+    /**
+     * Open the tour automatically the first time an authenticated editor
+     * loads the site (tracked per browser via localStorage). Editors can
+     * always relaunch it from the bar's "✦ Guide" button.
+     */
+    autoStart?: boolean;
   };
 };
 
