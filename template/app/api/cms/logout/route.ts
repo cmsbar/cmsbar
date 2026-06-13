@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { SESSION_COOKIE } from "@/lib/cmsbar/session";
+import { logout } from "@/lib/cmsbar/server/handlers/logout";
+import { cookieCtxFromRequest } from "@/lib/cmsbar/server/http";
 
-export async function POST() {
-  const res = NextResponse.json({ ok: true });
-  res.cookies.set(SESSION_COOKIE, "", { path: "/", maxAge: 0 });
-  return res;
+// Thin Next App Router wrapper: build the neutral request context from the
+// request and delegate to the framework-agnostic handler.
+export function POST(req: Request) {
+  return logout(req, cookieCtxFromRequest(req));
 }
