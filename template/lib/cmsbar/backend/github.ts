@@ -1,10 +1,16 @@
 type Env = { token: string; owner: string; repo: string; base: string };
 
+/** Base branch drafts are cut from, PRs target, and - in direct publishing
+    mode - saves commit straight to. */
+export function baseBranchName(): string {
+  return process.env.GITHUB_BASE_BRANCH || "master";
+}
+
 function env(): Env {
   const token = process.env.GITHUB_TOKEN;
   const owner = process.env.GITHUB_OWNER;
   const repo = process.env.GITHUB_REPO;
-  const base = process.env.GITHUB_BASE_BRANCH || "master";
+  const base = baseBranchName();
   if (!token || !owner || !repo) {
     throw new Error("GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO must be set.");
   }
@@ -84,6 +90,10 @@ export async function ensureBranch(
 // Delete a branch (git ref). If the branch has an open PR, GitHub closes that
 // PR automatically. Treats an already-gone ref as success.
 export async function deleteBranch(branch: string): Promise<void> {
+  // Never delete the base branch. session/clear prunes 0-commit draft
+  // branches, and in direct publishing mode the "draft" IS the base branch -
+  // a no-op here keeps that cleanup from nuking the live ref.
+  if (branch === baseBranchName()) return;
   const { owner, repo } = env();
   const res = await gh(
     `/repos/${owner}/${repo}/git/refs/heads/${refPath(branch)}`,

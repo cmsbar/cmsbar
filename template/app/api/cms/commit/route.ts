@@ -6,6 +6,7 @@ import {
   verifySession,
 } from "@/lib/cmsbar/session";
 import {
+  baseBranchName,
   ensureBranch,
   getBranchSha,
   getFile,
@@ -22,6 +23,7 @@ import {
 import { getContent, setPath } from "@/lib/content";
 import { approvedLabelName, isApproved } from "@/lib/cmsbar/approved";
 import { buildCmsMetaMarker } from "@/lib/cmsbar/cmsMeta";
+import { publishingMode } from "@/lib/cmsbar/config";
 import { cmsConfig } from "@/cms.config";
 import {
   isAllowedRepoPath,
@@ -37,6 +39,16 @@ function ghInfoForUrl(): { owner: string; repo: string } {
     owner: process.env.GITHUB_OWNER || "",
     repo: process.env.GITHUB_REPO || "",
   };
+}
+
+function isNonFastForward(err: unknown): boolean {
+  // updateRef throws `updateRef <branch> failed: <status> <body>`; GitHub
+  // returns 422 with "Update is not a fast forward" when the ref has moved.
+  const msg = err instanceof Error ? err.message : String(err);
+  return (
+    /updateRef\b[^]*\bfailed: 422\b/.test(msg) ||
+    /not a fast.?forward/i.test(msg)
+  );
 }
 
 function commitMessage(args: {
@@ -161,10 +173,52 @@ export async function POST(req: Request) {
       );
     }
   }
+  for (const e of edits) {
+    if (typeof e.path !== "string") {
+      return NextResponse.json(
+        { error: "Edit missing path" },
+        { status: 400 },
+      );
+    }
+  }
+
+  // Direct publishing: commit straight to the base branch - no draft branch,
+  // no PR, no approval lock. The site redeploys from base.
+  const direct = publishingMode(cmsConfig) === "direct";
+  const targetBranch = direct ? baseBranchName() : draft.branch;
 
   try {
-    // Refuse to commit to a PR that's been marked approved/locked.
-    if (draft.prNumber) {
+    if (!direct && draft.branch === baseBranchName()) {
+      // A session minted under direct publishing points at the base branch.
+      // After flipping back to review mode, committing there would silently
+      // bypass the PR flow - make the editor restart cleanly instead.
+      return NextResponse.json(
+        {
+          error:
+            "This editing session predates the switch back to reviewed publishing. Exit the draft and start a new one.",
+        },
+        { status: 409 },
+      );
+    }
+
+    if (direct && draft.branch !== baseBranchName()) {
+      // The mirror case: a session minted under reviewed publishing carries a
+      // cms/* draft branch. After flipping to direct mode we'd commit only the
+      // current edits to the base branch, stranding everything already saved on
+      // that draft branch - earlier content rounds, and uploaded media which
+      // live only there. Make the editor restart cleanly instead.
+      return NextResponse.json(
+        {
+          error:
+            "This editing session predates the switch to direct publishing. Exit the draft and start a new one.",
+        },
+        { status: 409 },
+      );
+    }
+
+    // Refuse to commit to a PR that's been marked approved/locked. (Direct
+    // mode has no PRs, so there is nothing to check.)
+    if (!direct && draft.prNumber) {
       try {
         const pr = await getPullRequest(draft.prNumber);
         if (isApproved(pr.labels)) {
@@ -182,42 +236,18 @@ export async function POST(req: Request) {
       }
     }
 
-    await ensureBranch(draft.branch);
+    if (!direct) await ensureBranch(draft.branch);
 
-    const branchSha = await getBranchSha(draft.branch);
-    if (!branchSha) throw new Error("Editing branch vanished");
-    const commit = await getCommit(branchSha);
-    const baseTreeSha = commit.tree.sha;
-
-    const changes: TreeChange[] = [];
-
-    if (edits.length > 0) {
-      const existing = await getFile(draft.branch, CONTENT_FILE);
-      const json = existing
-        ? JSON.parse(existing.content)
-        : JSON.parse(JSON.stringify(getContent()));
-      for (const e of edits) {
-        if (typeof e.path !== "string") {
-          throw new Error("Edit missing path");
-        }
-        setPath(json, e.path, e.value);
-      }
-      const blobSha = await createBlob(
-        Buffer.from(JSON.stringify(json, null, 2) + "\n", "utf8").toString(
-          "base64",
-        ),
-      );
-      changes.push({
-        path: CONTENT_FILE,
-        mode: "100644",
-        type: "blob",
-        sha: blobSha,
-      });
-    }
+    // Content-independent tree entries (media uploads, new folders, deletes)
+    // are built once - they don't depend on the branch head. The content.json
+    // edit is merged against the head INSIDE commitTo instead, so a retry after
+    // a concurrent push re-reads the latest content and overlays this draft's
+    // edits per-path, rather than clobbering it with a stale full-file snapshot.
+    const staticChanges: TreeChange[] = [];
 
     for (const u of uploads) {
       const blobSha = await createBlob(u.contentBase64);
-      changes.push({
+      staticChanges.push({
         path: u.repoPath,
         mode: "100644",
         type: "blob",
@@ -234,7 +264,7 @@ export async function POST(req: Request) {
       );
       for (const f of folders) {
         const clean = f.replace(/^\/+|\/+$/g, "");
-        changes.push({
+        staticChanges.push({
           path: `public/${clean}/.gitkeep`,
           mode: "100644",
           type: "blob",
@@ -244,10 +274,10 @@ export async function POST(req: Request) {
     }
 
     for (const d of deletes) {
-      changes.push({ path: d, mode: "100644", type: "blob", sha: null });
+      staticChanges.push({ path: d, mode: "100644", type: "blob", sha: null });
     }
 
-    if (changes.length === 0) {
+    if (edits.length === 0 && staticChanges.length === 0) {
       return NextResponse.json(
         { error: "Nothing to commit after validation" },
         { status: 400 },
@@ -261,13 +291,80 @@ export async function POST(req: Request) {
       folders,
       deletes,
     });
-    const newTreeSha = await createTree({ baseTreeSha, changes });
-    const newCommitSha = await createCommit({
-      message,
-      treeSha: newTreeSha,
-      parentSha: branchSha,
-    });
-    await updateRef(draft.branch, newCommitSha);
+
+    // One head-read → (merge content) → tree → commit → ref-update round
+    // against `branch`. The content.json read/merge lives here so each attempt
+    // - including the retry below - merges against the head it commits onto.
+    const commitTo = async (branch: string): Promise<string> => {
+      const headSha = await getBranchSha(branch);
+      if (!headSha)
+        throw new Error(
+          direct
+            ? `Base branch ${branch} not found`
+            : "Editing branch vanished",
+        );
+      const baseTreeSha = (await getCommit(headSha)).tree.sha;
+
+      const changes: TreeChange[] = [...staticChanges];
+      if (edits.length > 0) {
+        const existing = await getFile(branch, CONTENT_FILE);
+        const json = existing
+          ? JSON.parse(existing.content)
+          : JSON.parse(JSON.stringify(getContent()));
+        for (const e of edits) {
+          setPath(json, e.path, e.value);
+        }
+        const blobSha = await createBlob(
+          Buffer.from(JSON.stringify(json, null, 2) + "\n", "utf8").toString(
+            "base64",
+          ),
+        );
+        changes.push({
+          path: CONTENT_FILE,
+          mode: "100644",
+          type: "blob",
+          sha: blobSha,
+        });
+      }
+
+      const treeSha = await createTree({ baseTreeSha, changes });
+      const sha = await createCommit({
+        message,
+        treeSha,
+        parentSha: headSha,
+      });
+      await updateRef(branch, sha);
+      return sha;
+    };
+
+    let newCommitSha: string;
+    if (direct) {
+      try {
+        newCommitSha = await commitTo(targetBranch);
+      } catch (err) {
+        // Only a non-fast-forward ref update is safe to retry: the base moved
+        // between our head read and updateRef (a deploy or another editor), and
+        // commitTo re-reads + re-merges against the new head. Any other failure
+        // (auth, rate limit, validation, deleting a missing path) would just
+        // repeat - and blindly retrying risks a duplicate commit/deploy - so
+        // surface it instead.
+        if (!isNonFastForward(err)) throw err;
+        console.warn(
+          "CMS: direct publish hit a non-fast-forward; retrying once.",
+          err,
+        );
+        newCommitSha = await commitTo(targetBranch);
+      }
+      const { owner: ghOwner, repo: ghRepo } = ghInfoForUrl();
+      return NextResponse.json({
+        ok: true,
+        direct: true,
+        branch: targetBranch,
+        commitSha: newCommitSha,
+        branchUrl: `https://github.com/${ghOwner}/${ghRepo}/commit/${newCommitSha}`,
+      });
+    }
+    newCommitSha = await commitTo(targetBranch);
 
     let pr: { number?: number; url?: string } = {
       number: draft.prNumber,
