@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { IssuesPanel } from "./IssuesPanel";
 import { visibleOnPage, type ParsedIssue } from "@/lib/cmsbar/backend/issues";
+import { cmsFetch } from "@/lib/cmsbar/cmsFetch";
 
 /** GitHub's label-filtered issue list can lag seconds behind create - keep these until reload sees them. */
 function mergeWithPending(
@@ -45,7 +46,7 @@ export function IssuesButton() {
     else setRefreshing(true);
     setError(null);
     try {
-      const res = await fetch("/api/cms/issues", { cache: "no-store" });
+      const res = await cmsFetch("/issues", { cache: "no-store" });
       if (!res.ok) {
         const b = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(b.error || `HTTP ${res.status}`);

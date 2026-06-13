@@ -7,6 +7,7 @@ import { FocalPointOverlay, parsePos } from "./FocalPoint";
 import { Portal } from "./Portal";
 import { isSharedPath } from "./shared-paths";
 import { cn } from "@/lib/cmsbar/utils";
+import { cmsFetch } from "@/lib/cmsbar/cmsFetch";
 
 type Props = Omit<ImageProps, "src"> & {
   path: string;
@@ -329,7 +330,7 @@ function MediaBrowser({
   const load = async () => {
     setError(null);
     try {
-      const res = await fetch("/api/cms/images/list", { cache: "no-store" });
+      const res = await cmsFetch("/images/list", { cache: "no-store" });
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error || `List failed (HTTP ${res.status})`);

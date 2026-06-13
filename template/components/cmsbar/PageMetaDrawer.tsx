@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useCms } from "./ContentProvider";
 import { metaKey, META_PAGES } from "@/lib/cmsbar/page-meta";
 import { cn } from "@/lib/cmsbar/utils";
+import { cmsFetch } from "@/lib/cmsbar/cmsFetch";
 
 const TITLE_MAX = 60;
 const DESC_MAX = 155;
@@ -413,7 +414,7 @@ function ImageField({
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/cms/media/list?type=image", {
+        const res = await cmsFetch("/media/list?type=image", {
           cache: "no-store",
         });
         const data = (await res.json().catch(() => ({}))) as {
