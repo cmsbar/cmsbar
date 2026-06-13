@@ -7,6 +7,7 @@ import { FocalPointOverlay, parsePos } from "./FocalPoint";
 import { Portal } from "./Portal";
 import { isSharedPath } from "./shared-paths";
 import { cn } from "@/lib/cmsbar/utils";
+import { cmsFetch } from "@/lib/cmsbar/cmsFetch";
 
 type Props = {
   path: string;
@@ -415,7 +416,7 @@ function MediaPicker({
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/cms/media/list", { cache: "no-store" });
+        const res = await cmsFetch("/media/list", { cache: "no-store" });
         const data = (await res.json().catch(() => ({}))) as {
           files?: { path: string }[];
           error?: string;
@@ -495,7 +496,7 @@ function MediaPicker({
     if (isGoogleMapsUrl(input)) {
       try {
         setResolving(true);
-        const r = await fetch("/api/cms/resolve-map", {
+        const r = await cmsFetch("/resolve-map", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url: input }),

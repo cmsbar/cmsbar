@@ -13,6 +13,7 @@ import { IssuesButton } from "./IssuesButton";
 import { CmsTour, TOUR_OPEN_EVENT } from "./CmsTour";
 import { pageNameForPath } from "./pageName";
 import { cn } from "@/lib/cmsbar/utils";
+import { cmsFetch } from "@/lib/cmsbar/cmsFetch";
 
 const DIVIDER = <span className="h-4 w-px bg-white/20" />;
 
@@ -83,7 +84,7 @@ export function CmsBar() {
     setError(null);
     try {
       const title = pageNameForPath(pathname);
-      const res = await fetch("/api/cms/session/start", {
+      const res = await cmsFetch("/session/start", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ title, pagePath: pathname }),
@@ -108,7 +109,7 @@ export function CmsBar() {
     try {
       const base = fromTitle?.trim() || pageNameForPath(pathname);
       const title = /\(fork\)$/i.test(base) ? base : `${base} (fork)`;
-      const res = await fetch("/api/cms/session/fork", {
+      const res = await cmsFetch("/session/fork", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ fromBranch, title }),
@@ -127,7 +128,7 @@ export function CmsBar() {
   if (!cms.authenticated) return null;
 
   const logout = async () => {
-    await fetch("/api/cms/logout", { method: "POST" });
+    await cmsFetch("/logout", { method: "POST" });
     window.location.reload();
   };
 
@@ -138,7 +139,7 @@ export function CmsBar() {
     )
       return;
     discardAll();
-    await fetch("/api/cms/session/clear", { method: "POST" });
+    await cmsFetch("/session/clear", { method: "POST" });
     try {
       localStorage.removeItem(PREVIEW_LS_KEY);
     } catch {
@@ -158,7 +159,7 @@ export function CmsBar() {
           contentBase64: await fileToBase64(u.file),
         })),
       );
-      const res = await fetch("/api/cms/commit", {
+      const res = await cmsFetch("/commit", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -232,7 +233,7 @@ export function CmsBar() {
           approved={!!cms.preview.approved}
           onExitPreview={() => setPreview(null)}
           onEdit={async () => {
-            const res = await fetch("/api/cms/session/switch", {
+            const res = await cmsFetch("/session/switch", {
               method: "POST",
               headers: { "content-type": "application/json" },
               body: JSON.stringify({

@@ -21,6 +21,7 @@ import {
   putUpload,
 } from "@/lib/cmsbar/uploadStorage";
 import { clampFolder } from "@/lib/cmsbar/media";
+import { cmsFetch } from "@/lib/cmsbar/cmsFetch";
 
 // Persisted (localStorage) shape - only serializable bits.
 type Persisted = {
@@ -201,7 +202,7 @@ export function ContentProvider({
 
     const check = async () => {
       try {
-        const res = await fetch("/api/cms/session/check", {
+        const res = await cmsFetch("/session/check", {
           cache: "no-store",
         });
         if (!res.ok) return;
@@ -494,8 +495,8 @@ export function ContentProvider({
     }
     setCmsState((s) => ({ ...s, preview: state, previewContent: undefined }));
     try {
-      const res = await fetch(
-        `/api/cms/preview?branch=${encodeURIComponent(state.branch)}`,
+      const res = await cmsFetch(
+        `/preview?branch=${encodeURIComponent(state.branch)}`,
         {
           cache: "no-store",
         },

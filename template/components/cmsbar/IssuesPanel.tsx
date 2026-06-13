@@ -12,6 +12,7 @@ import {
   type IssueStatus,
   type ParsedIssue,
 } from "@/lib/cmsbar/backend/issues";
+import { cmsFetch } from "@/lib/cmsbar/cmsFetch";
 
 type Pinned = { path: string; shared: boolean };
 
@@ -105,7 +106,7 @@ export function IssuesPanel({
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const res = await fetch("/api/cms/issues", {
+      const res = await cmsFetch("/issues", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -141,7 +142,7 @@ export function IssuesPanel({
 
   const changeStatus = async (n: number, status: IssueStatus) => {
     try {
-      const res = await fetch(`/api/cms/issues/${n}`, {
+      const res = await cmsFetch(`/issues/${n}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ status }),

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { cmsFetch } from "@/lib/cmsbar/cmsFetch";
 
 export default function CmsLoginPage() {
   const [username, setUsername] = useState("");
@@ -13,7 +14,7 @@ export default function CmsLoginPage() {
     setError(null);
     setBusy(true);
     try {
-      const res = await fetch("/api/cms/login", {
+      const res = await cmsFetch("/login", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ username, password }),

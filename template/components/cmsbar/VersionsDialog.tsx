@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Portal } from "./Portal";
 import { useCms } from "./ContentProvider";
 import { cn } from "@/lib/cmsbar/utils";
+import { cmsFetch } from "@/lib/cmsbar/cmsFetch";
 
 export type Version = {
   number: number;
@@ -42,7 +43,7 @@ export function VersionsDialog({
   const load = async () => {
     setError(null);
     try {
-      const res = await fetch("/api/cms/versions", { cache: "no-store" });
+      const res = await cmsFetch("/versions", { cache: "no-store" });
       if (!res.ok) {
         const b = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(b.error || `HTTP ${res.status}`);
@@ -75,7 +76,7 @@ export function VersionsDialog({
   const editVersion = async (v: Version) => {
     setBusy(v.branch);
     try {
-      const res = await fetch("/api/cms/session/switch", {
+      const res = await cmsFetch("/session/switch", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ branch: v.branch, title: v.title }),
