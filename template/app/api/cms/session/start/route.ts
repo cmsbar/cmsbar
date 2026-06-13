@@ -8,12 +8,15 @@ import {
   slugify,
 } from "@/lib/cmsbar/session";
 import {
+  baseBranchName,
   ensureBranch,
   createPullRequest,
   findOpenPullRequest,
 } from "@/lib/cmsbar/backend/github";
 import { buildCmsMetaMarker } from "@/lib/cmsbar/cmsMeta";
 import { draftBranch } from "@/lib/cmsbar/keys";
+import { publishingMode } from "@/lib/cmsbar/config";
+import { cmsConfig } from "@/cms.config";
 
 function setCookie(res: NextResponse, token: string) {
   res.cookies.set(SESSION_COOKIE, token, {
@@ -47,6 +50,31 @@ export async function POST(req: Request) {
   const shortId = crypto.randomBytes(3).toString("hex");
   const sessionId = `${slug}-${shortId}`;
   const branch = draftBranch(sessionId);
+
+  // Direct publishing: no cms/* branch and no PR. The session's "draft"
+  // points at the base branch itself - same cookie shape, so ContentProvider's
+  // branch-keyed persistence keeps working - and every save commits (and
+  // deploys) straight to base.
+  if (publishingMode(cmsConfig) === "direct") {
+    const base = baseBranchName();
+    const token = signSession({
+      user: session.user,
+      issuedAt: session.issuedAt,
+      draft: {
+        sessionId: `live-${shortId}`,
+        branch: base,
+        title: "Live edits",
+        pagePath: normalizedPagePath,
+      },
+    });
+    const res = NextResponse.json({
+      ok: true,
+      branch: base,
+      title: "Live edits",
+    });
+    setCookie(res, token);
+    return res;
+  }
 
   try {
     await ensureBranch(branch);

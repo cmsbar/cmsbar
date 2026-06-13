@@ -220,6 +220,11 @@ it last, behind the stable config + adapter foundations.
 
 ### 6. Framework support - neutral core + thin adapters (not separate repos)
 
+> **Detailed proposal: [FRAMEWORKS.md](./FRAMEWORKS.md)** - file-by-file coupling audit of the
+> template, per-framework adapter specs (React Router 7, TanStack Start, Vite SPA + server
+> companion, Astro/Pages-Router/SvelteKit tiers), effort estimates, and sequencing. This section
+> stays the architectural summary; that doc is the engineering plan.
+
 CMSBar is Next.js App Router-bound today, but the framework-specific surface is _small_: server-side
 session reading, the API route handlers, navigation hooks (`usePathname`/`useRouter`), and
 `next/image`. Everything else (primitives, `ContentProvider`, path helpers, IndexedDB, the GitHub
@@ -311,7 +316,8 @@ interface CmsHost {
 `CmsHost` seam exists (Phase 1) and the core is package-split (alongside Phase 3-4), a new framework
 is one thin adapter package. Build `@cms/tanstack-start` when a real target appears. The
 TanStack-Router-SPA case is _not_ in this track - it needs a backend/auth decision first (serverless
-endpoint or OAuth device flow) and should be scoped separately.
+endpoint or OAuth device flow) and should be scoped separately. Audit, adapter specs, and the
+recommended build order for this track live in [FRAMEWORKS.md](./FRAMEWORKS.md).
 
 KEA stays on the same code throughout - each phase keeps the live site working by having KEA supply
 its own config/theme/adapter, so the product and the production site never fork.

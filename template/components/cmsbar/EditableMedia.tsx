@@ -65,6 +65,16 @@ function normalizeEmbedUrl(url: string): string {
       if (id) return `https://www.youtube.com/embed/${id}`;
     }
 
+    // Vimeo: vimeo.com/<id> (or /channels/.../<id>, optional unlisted hash) →
+    // player.vimeo.com/video/<id> - the bare share link refuses framing.
+    if (host === "vimeo.com") {
+      const m = u.pathname.match(/\/(\d+)(?:\/([0-9a-z]+))?\/?$/i);
+      if (m) {
+        const hash = m[2] ? `?h=${m[2]}` : "";
+        return `https://player.vimeo.com/video/${m[1]}${hash}`;
+      }
+    }
+
     return url;
   } catch {
     return url;

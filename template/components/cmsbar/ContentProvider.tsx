@@ -12,6 +12,8 @@ import {
 } from "react";
 import type { SiteContent } from "@/lib/content";
 import { resolvePath } from "@/lib/content";
+import { cmsConfig } from "@/cms.config";
+import { publishingMode } from "@/lib/cmsbar/config";
 import {
   clearBranch,
   deleteUpload,
@@ -32,6 +34,10 @@ function lsKey(branch?: string): string | null {
   if (!branch) return null;
   return pendingLsKey(branch);
 }
+
+// Direct publishing: saves commit straight to the base branch - no PR exists,
+// so there is no approval state to poll for and nothing that can lock editing.
+const DIRECT = publishingMode(cmsConfig) === "direct";
 
 function loadPersisted(branch?: string): Persisted | null {
   if (typeof window === "undefined") return null;
@@ -186,8 +192,9 @@ export function ContentProvider({
   // Poll the server for the freshest state of the active draft (specifically
   // whether the PR has been marked approved by a reviewer). Runs on mount,
   // every 30s while the tab is visible, and immediately on tab refocus.
+  // Skipped entirely in direct mode - there is no PR to poll.
   useEffect(() => {
-    if (!cms.draft) return;
+    if (!cms.draft || DIRECT) return;
     let cancelled = false;
     const POLL_MS = 30_000;
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -301,8 +308,20 @@ export function ContentProvider({
 
   // Persist serializable slices.
   useEffect(() => {
+    // In direct mode the draft branch is always the base branch, so this
+    // localStorage key is shared by every future session on this device.
+    // Persist only overrides that are still pending: committed values already
+    // live on the base branch, and keeping them here would shadow newer live
+    // content - and silently re-publish stale values - in a later session.
+    // In review mode each draft has its own cms/* key that dies with the draft,
+    // so committed overrides are kept there to restore the saved view on reload.
+    const persistOverrides = DIRECT
+      ? Object.fromEntries(
+          Object.entries(overrides).filter(([k]) => pendingEditPathsSet.has(k)),
+        )
+      : overrides;
     savePersisted(draftBranch, {
-      overrides,
+      overrides: persistOverrides,
       pendingEditPaths: Array.from(pendingEditPathsSet),
       pendingFolders,
       pendingDeletes,
@@ -544,7 +563,8 @@ export function ContentProvider({
   const pendingCount =
     pendingEditPaths.length + pendingFolders.length + pendingDeletes.length;
 
-  const editingEnabled = !!cms.draft && !cms.preview && !cms.draftApproved;
+  const editingEnabled =
+    !!cms.draft && !cms.preview && (DIRECT || !cms.draftApproved);
 
   // While editing, block all in-page navigation. Editors must save (or discard)
   // the draft before moving to another page - otherwise pending edits would be

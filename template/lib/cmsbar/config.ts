@@ -82,7 +82,22 @@ export type CmsConfig = {
      */
     autoStart?: boolean;
   };
+  publishing?: {
+    /**
+     * "review" (default): saves commit to a cms/* draft branch and open a
+     * PR for approval. "direct": saves commit straight to the base branch -
+     * fast and unreviewed; the site redeploys from base on every publish.
+     */
+    mode?: "review" | "direct";
+  };
 };
+
+/** Effective publishing mode - absent or partial config means the reviewed PR flow. */
+export function publishingMode(
+  config: Pick<CmsConfig, "publishing">,
+): "review" | "direct" {
+  return config.publishing?.mode === "direct" ? "direct" : "review";
+}
 
 export function defineCmsConfig(config: CmsConfig): CmsConfig {
   if (!/^[a-z][a-z0-9_-]*$/.test(config.namespace)) {

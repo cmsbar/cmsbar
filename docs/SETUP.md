@@ -115,6 +115,38 @@ Visit `http://localhost:3000/cmsbar/login`.
 
 ---
 
+## Publishing modes
+
+CMSBar has two publishing modes, chosen in `cms.config.ts`:
+
+```ts
+export const cmsConfig = defineCmsConfig({
+  // …
+  publishing: { mode: "direct" }, // default when absent: "review"
+});
+```
+
+### `review` (the default)
+
+The flow described throughout this document: every save commits to a `cms/<slug>` draft branch and opens (or updates) a PR. Someone reviews, optionally locks it with the approved label, and merges - only then does the live site change. Nothing needs to be configured; omitting `publishing` entirely means `review`.
+
+### `direct`
+
+For sites where the editor **is** the reviewer (a solo owner, an internal tool), the PR round-trip is pure friction. With `publishing: { mode: "direct" }`:
+
+- **Edit site** replaces **New draft** - no `cms/*` branch and no PR are created; the editing session points straight at the base branch (`GITHUB_BASE_BRANCH`).
+- The bar shows an amber **Direct** badge, and **Save** becomes **Publish**: every publish commits straight to the base branch and the bar confirms inline ("Published - the site redeploys from `<branch>`"). You stay in edit mode - there is no preview detour and no PR link.
+- Review-only affordances disappear: no Versions list (it lists open `cms/*` PRs, and direct publishing never creates any), no approval lock, no fork-to-edit.
+- If the base branch moves between reading its head and updating the ref (a concurrent deploy or editor), the commit is retried once against the fresh head before surfacing an error.
+
+> ⚠️ **Direct commits trigger production deploys.** Every Publish lands on the branch your host deploys from - typos and half-finished edits go live with no human gate. Use it only when that tradeoff is deliberate.
+
+**Tradeoff in one line:** `direct` is fast and unreviewed; `review` is slower but every change gets a second pair of eyes and an audit trail of PRs.
+
+**Switching modes** is a one-line change: set the `publishing.mode` you want (or delete the `publishing` key for `review`) and redeploy. A signed editing session can outlive the switch, so the first save from a session that predates the change is refused (HTTP 409) in *either* direction - a direct-era session (pointing at the base branch) is refused after switching to `review`, and a `cms/*` review-era session is refused after switching to `direct` (committing it would strand the media and earlier edits saved only on that draft branch). The editor exits that draft and starts a fresh one. **Any changes still unsaved in the old session are lost:** exiting discards the pending edits and staged uploads held on that device, and they cannot be reattached to the new draft - so Publish (or deliberately discard) before switching modes.
+
+---
+
 ## Daily use (for the editor)
 
 ### Where you are at a glance

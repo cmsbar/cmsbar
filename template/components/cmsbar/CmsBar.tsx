@@ -1,9 +1,10 @@
 "use client";
 import { PREVIEW_LS_KEY } from "@/lib/cmsbar/keys";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { cmsConfig } from "@/cms.config";
+import { publishingMode } from "@/lib/cmsbar/config";
 import { useCms } from "./ContentProvider";
 import { VersionsDialog } from "./VersionsDialog";
 import { PageMetaDrawer } from "./PageMetaDrawer";
@@ -17,6 +18,10 @@ const DIVIDER = <span className="h-4 w-px bg-white/20" />;
 
 // Guided tour is opt-in: sites without `tour` config get no button, no overlay.
 const TOUR_ENABLED = (cmsConfig.tour?.steps.length ?? 0) > 0;
+
+// Direct publishing: saves go straight to the base branch - no draft branch,
+// no PR, no approval flow. Review-flow affordances are hidden.
+const DIRECT = publishingMode(cmsConfig) === "direct";
 
 const TourButton = () =>
   TOUR_ENABLED ? (
@@ -45,6 +50,9 @@ export function CmsBar() {
   const router = useRouter();
   const [busy, setBusy] = useState<"saving" | "starting" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Transient in-bar confirmation after a direct publish (auto-clears).
+  const [notice, setNotice] = useState<string | null>(null);
+  const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [versionsOpen, setVersionsOpen] = useState(false);
   const [metaOpen, setMetaOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -56,6 +64,19 @@ export function CmsBar() {
     document.body.classList.toggle("cms-highlight-shared", highlightShared);
     return () => document.body.classList.remove("cms-highlight-shared");
   }, [highlightShared]);
+
+  useEffect(
+    () => () => {
+      if (noticeTimer.current) clearTimeout(noticeTimer.current);
+    },
+    [],
+  );
+
+  const flashNotice = (msg: string) => {
+    setNotice(msg);
+    if (noticeTimer.current) clearTimeout(noticeTimer.current);
+    noticeTimer.current = setTimeout(() => setNotice(null), 6000);
+  };
 
   const startDraft = async () => {
     setBusy("starting");
@@ -149,13 +170,36 @@ export function CmsBar() {
       });
       if (!res.ok) {
         const b = (await res.json().catch(() => ({}))) as { error?: string };
+        if (res.status === 401) {
+          // A 12h session can lapse mid-edit (most likely in direct mode, where
+          // the rolling-refresh poll is skipped). Make the recovery obvious and
+          // reassure that work isn't lost - pending edits are kept on this
+          // device and reattach to the next session after logging back in.
+          throw new Error(
+            "Your session expired - log in again at /cmsbar/login, then your edits are still here. Your unsaved changes are kept on this device.",
+          );
+        }
         throw new Error(b.error || `Save failed (HTTP ${res.status})`);
       }
       const result = (await res.json()) as {
+        direct?: boolean;
+        branch?: string;
+        commitSha?: string;
         prUrl?: string;
         prError?: string;
         branchUrl?: string;
       };
+      if (result.direct) {
+        // Direct publish: the commit already landed on the live branch.
+        // Stay in edit mode - there is no PR to review and no draft branch
+        // to preview - and confirm inline. The server reports the branch it
+        // committed to (a stale review-era cookie can carry a cms/* name).
+        applyCommitted();
+        flashNotice(
+          `Published - the site redeploys from ${result.branch ?? "the live branch"}`,
+        );
+        return;
+      }
       applyCommitted({ prUrl: result.prUrl });
       // After a successful save, switch into preview mode against the just-saved
       // branch - so the editor immediately sees the rendered result without the
@@ -248,16 +292,28 @@ export function CmsBar() {
             onClick={startDraft}
             disabled={busy === "starting"}
             className="rounded-full bg-[var(--cmsbar-accent)] hover:bg-[var(--cmsbar-accent-strong)] text-white text-xs font-semibold px-3 py-1 disabled:opacity-60"
-            title={`Will create a draft named "${pageNameForPath(pathname)}"`}
+            title={
+              DIRECT
+                ? "Direct publishing: saves commit straight to the live branch"
+                : `Will create a draft named "${pageNameForPath(pathname)}"`
+            }
           >
-            {busy === "starting" ? "Starting…" : "New draft"}
+            {busy === "starting"
+              ? "Starting…"
+              : DIRECT
+                ? "Edit site"
+                : "New draft"}
           </button>
-          <button
-            onClick={() => setVersionsOpen(true)}
-            className="rounded-full bg-white/10 hover:bg-white/20 text-xs px-3 py-1"
-          >
-            Versions
-          </button>
+          {/* Versions lists open cms/* PRs; direct publishing creates none,
+              so the dialog would be perpetually empty - hide it. */}
+          {!DIRECT && (
+            <button
+              onClick={() => setVersionsOpen(true)}
+              className="rounded-full bg-white/10 hover:bg-white/20 text-xs px-3 py-1"
+            >
+              Versions
+            </button>
+          )}
           <TourButton />
           {DIVIDER}
           <button
@@ -308,7 +364,9 @@ export function CmsBar() {
   }
 
   // ─── Active draft ─────────────────────────────────────────────────────────
-  const approved = !!cms.draftApproved;
+  // The approval lock is a review-flow concept; in direct mode there is no PR
+  // to approve, so it must never render (or block saving).
+  const approved = !DIRECT && !!cms.draftApproved;
   const stripBg = approved
     ? "bg-emerald-600 text-white"
     : pendingCount > 0
@@ -324,7 +382,11 @@ export function CmsBar() {
         )}
       >
         <span>
-          {approved ? "Approved draft (read-only):" : "Editing draft:"}
+          {approved
+            ? "Approved draft (read-only):"
+            : DIRECT
+              ? "Editing live site:"
+              : "Editing draft:"}
         </span>
         <strong className="truncate max-w-[24rem]">{cms.draft.title}</strong>
         {!approved && pendingCount > 0 && (
@@ -369,10 +431,17 @@ export function CmsBar() {
             "rounded-full px-2.5 py-0.5 text-xs font-medium",
             approved
               ? "bg-emerald-500/20 text-emerald-200"
-              : "bg-[var(--cmsbar-accent-soft)] text-[var(--cmsbar-accent-text)]",
+              : DIRECT
+                ? "bg-amber-500/20 text-amber-200"
+                : "bg-[var(--cmsbar-accent-soft)] text-[var(--cmsbar-accent-text)]",
           )}
+          title={
+            DIRECT
+              ? "Direct publishing: edits commit straight to the live branch - no review"
+              : undefined
+          }
         >
-          {approved ? "Approved" : "Draft"}
+          {approved ? "Approved" : DIRECT ? "Direct" : "Draft"}
         </span>
         <span
           className="text-white/50 text-xs max-w-[12rem] truncate"
@@ -400,11 +469,27 @@ export function CmsBar() {
             title={
               pendingCount === 0
                 ? "No changes to save"
-                : `Save ${pendingCount} change(s)`
+                : DIRECT
+                  ? `Publish ${pendingCount} change(s) straight to the live branch`
+                  : `Save ${pendingCount} change(s)`
             }
           >
-            {busy === "saving" ? "Saving…" : "Save"}
+            {busy === "saving"
+              ? DIRECT
+                ? "Publishing…"
+                : "Saving…"
+              : DIRECT
+                ? "Publish"
+                : "Save"}
           </button>
+        )}
+        {notice && (
+          <span
+            className="text-emerald-300 text-xs max-w-[18rem] truncate"
+            title={notice}
+          >
+            ✓ {notice}
+          </span>
         )}
         {/* 2. Discard draft (abandon the whole draft and return to the live site) */}
         <button
