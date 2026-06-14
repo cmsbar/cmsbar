@@ -1,0 +1,27 @@
+{
+  "name": "@cmsbar/example-sveltekit",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "vite dev --port 3260",
+    "build": "vite build",
+    "preview": "vite preview --port 3260",
+    "start": "node build/index.js",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
+  },
+  "dependencies": {
+    "@sveltejs/adapter-node": "^5",
+    "@sveltejs/kit": "^2",
+    "bcryptjs": "^3",
+    "svelte": "^5"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5",
+    "@types/bcryptjs": "^2",
+    "@types/node": "^22",
+    "svelte-check": "^4",
+    "typescript": "^5",
+    "vite": "^6"
+  }
+}
