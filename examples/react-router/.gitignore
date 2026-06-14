@@ -1,0 +1,20 @@
+# Dependencies + build output
+node_modules/
+build/
+.react-router/
+package-lock.json
+*.tsbuildinfo
+.DS_Store
+
+# Env files: commit only the template (.env.example). Copy it to .env.local and
+# fill in your CMSBar secrets to run the editor (root .gitignore handles .env*).
+!.env.example
+
+# CMS core is assembled by `npm run setup` (copied from ../../template), never
+# committed - so this example never forks the core. Only the host-specific
+# wiring under app/cmsbar, app/routes, app/root.tsx, app/cms.config.ts,
+# app/content/, app/styles/app.css lives in git.
+/app/components/cmsbar/
+/app/lib/cmsbar/
+/app/lib/content.ts
+/app/styles/cmsbar.css
