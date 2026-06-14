@@ -1,11 +1,6 @@
-import type { Metadata } from "next";
 import { cmsConfig } from "@/cms.config";
 import { getContent } from "@/lib/content";
-import {
-  EMPTY_PAGE_META,
-  resolvePageMeta,
-  type PageMetaEntry,
-} from "./page-meta-core";
+import { EMPTY_PAGE_META, type PageMetaEntry } from "./page-meta-core";
 
 // Re-export the neutral type so existing importers (`@/lib/cmsbar/page-meta`)
 // keep working unchanged.
@@ -34,31 +29,6 @@ export function getPageMeta(key: string): PageMetaEntry {
   return { ...EMPTY_PAGE_META, ...(fromContent ?? {}) };
 }
 
-/**
- * Build a Next.js Metadata object for a static page from CMS content. Falls
- * back to the provided defaults (the page's original hardcoded title/desc) so
- * a missing/empty entry never produces a blank <head>.
- *
- * The actual computation is delegated to the framework-neutral
- * `resolvePageMeta`; this function only maps its plain result onto Next's
- * Metadata shape.
- */
-export function buildPageMetadata(
-  key: string,
-  fallback: { title: string; description: string },
-): Metadata {
-  const r = resolvePageMeta(getPageMeta(key), fallback);
-
-  const meta: Metadata = {
-    title: r.title,
-    description: r.description,
-    openGraph: {
-      title: r.ogTitle,
-      description: r.ogDescription,
-      ...(r.ogImage ? { images: [{ url: r.ogImage }] } : {}),
-    },
-  };
-  if (r.canonical) meta.alternates = { canonical: r.canonical };
-  if (r.robots) meta.robots = r.robots;
-  return meta;
-}
+// buildPageMetadata (the Next Metadata builder) lives in page-meta-next.ts so
+// this module stays framework-neutral. Non-Next hosts build their head from
+// resolvePageMeta() directly.
