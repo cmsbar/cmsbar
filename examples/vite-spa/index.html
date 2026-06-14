@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!--
+      This is the SPA shell. A crawler that fetches "/" gets exactly this static
+      HTML plus the bundle <script> below - there is no SSR, so the editable
+      content (and any pageMeta/SEO drawer edits) is NOT in the served markup.
+      It renders only after the bundle boots in the browser. See docs/FRAMEWORKS.md.
+    -->
+    <title>CMSBar Vite SPA example</title>
+    <meta
+      name="description"
+      content="A site edited in place with CMSBar, running as a client-only Vite SPA."
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,35 @@
+{
+  "site": {
+    "name": "CMSBar Vite SPA example",
+    "description": "A site edited in place with CMSBar, running as a client-only Vite SPA with a Hono companion."
+  },
+  "launch": {
+    "mode": "live"
+  },
+  "favicon": "",
+  "pageMeta": {
+    "home": {
+      "title": "CMSBar runs in this Vite SPA host",
+      "description": "A site edited in place with CMSBar, running as a client-only Vite SPA.",
+      "ogImage": "",
+      "ogTitle": "",
+      "ogDescription": "",
+      "canonical": "",
+      "noindex": false
+    }
+  },
+  "nav": [{ "name": "Home", "href": "/" }],
+  "home": {
+    "hero": {
+      "badge": "Now editable in place",
+      "headline": "Click anything. Change it. Ship it as a PR.",
+      "subtitle": "This text is editable - log in and click it.",
+      "cta": "Get started"
+    }
+  },
+  "demo": {
+    "title": "CMSBar runs in this Vite SPA host",
+    "intro": "This paragraph and the heading above are rendered by the framework-neutral CMS primitives. There is no SSR here: the SPA boots, fetches its session from the Hono companion, and hydrates the editor entirely on the client.",
+    "image": "/images/demo.svg"
+  }
+}
