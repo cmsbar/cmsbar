@@ -27,6 +27,7 @@ import {
   isAllowedRepoPath,
   isAllowedFolder,
   describeAllowedFolders,
+  MEDIA_ROOT,
 } from "@/lib/cmsbar/media";
 import {
   type CmsHandler,
@@ -268,7 +269,7 @@ export const commit: CmsHandler = async (req, ctx) => {
       for (const f of folders) {
         const clean = f.replace(/^\/+|\/+$/g, "");
         staticChanges.push({
-          path: `public/${clean}/.gitkeep`,
+          path: `${MEDIA_ROOT}/${clean}/.gitkeep`,
           mode: "100644",
           type: "blob",
           sha: gitkeepSha,

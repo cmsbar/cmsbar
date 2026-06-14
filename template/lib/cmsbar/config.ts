@@ -50,6 +50,14 @@ export type CmsConfig = {
    * from, and browse. The first entry is the default upload target.
    */
   mediaFolders: string[];
+  /**
+   * The repo directory the host serves static assets from, in front of the
+   * public URL path - a file at `<mediaRoot>/images/x.jpg` is served at
+   * `/images/x.jpg`. Defaults to `"public"` (Next.js, Vite, Astro). Frameworks
+   * that serve from a different directory set this: SvelteKit uses `"static"`.
+   * `mediaFolders` are expected to live under this root.
+   */
+  mediaRoot?: string;
   /** Git branch prefix for drafts. One draft = one `<prefix><slug>` branch. */
   branchPrefix: string;
   /**
@@ -97,6 +105,15 @@ export function publishingMode(
   config: Pick<CmsConfig, "publishing">,
 ): "review" | "direct" {
   return config.publishing?.mode === "direct" ? "direct" : "review";
+}
+
+/**
+ * Effective static-asset root, normalized (no leading/trailing slashes).
+ * Absent config keeps the Next/Vite/Astro default of `"public"`.
+ */
+export function mediaRootDir(config: Pick<CmsConfig, "mediaRoot">): string {
+  const raw = config.mediaRoot ?? "public";
+  return raw.replace(/^\/+|\/+$/g, "") || "public";
 }
 
 export function defineCmsConfig(config: CmsConfig): CmsConfig {

@@ -6,6 +6,7 @@ import { useCms } from "./ContentProvider";
 import { FocalPointOverlay, parsePos } from "./FocalPoint";
 import { Portal } from "./Portal";
 import { isSharedPath } from "@/lib/cmsbar/shared-paths";
+import { MEDIA_ROOT } from "@/lib/cmsbar/media";
 import { cn } from "@/lib/cmsbar/utils";
 import { cmsFetch, cmsApiBase } from "@/lib/cmsbar/cmsFetch";
 
@@ -154,7 +155,7 @@ export function resolveForBranch(
   // change mid-draft - serve them straight from the public path. Fresh uploads
   // still preview via their blob: URL.
   if (/\.(mp4|webm|ogg|mov|m4v)$/i.test(src)) return src;
-  const repoPath = `public${src}`;
+  const repoPath = `${MEDIA_ROOT}${src}`;
   return `${cmsApiBase()}/images/raw?branch=${encodeURIComponent(
     branch,
   )}&path=${encodeURIComponent(repoPath)}`;

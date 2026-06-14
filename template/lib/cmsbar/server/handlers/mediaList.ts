@@ -1,7 +1,7 @@
 import { readdir } from "fs/promises";
 import path from "path";
 import { SESSION_COOKIE, verifySession } from "@/lib/cmsbar/session";
-import { MEDIA_ROOTS } from "@/lib/cmsbar/media";
+import { MEDIA_ROOT, MEDIA_ROOTS } from "@/lib/cmsbar/media";
 import { type CmsHandler, json } from "@/lib/cmsbar/server/http";
 
 const VIDEO_EXT = /\.(mp4|webm|ogg|mov|m4v)$/i;
@@ -18,7 +18,7 @@ export const mediaList: CmsHandler = async (req, ctx) => {
   const isImage = new URL(req.url).searchParams.get("type") === "image";
   const sub = isImage ? MEDIA_ROOTS[0] : (MEDIA_ROOTS[1] ?? MEDIA_ROOTS[0]);
   const ext = isImage ? IMAGE_EXT : VIDEO_EXT;
-  const dir = path.join(process.cwd(), "public", sub);
+  const dir = path.join(process.cwd(), MEDIA_ROOT, sub);
   try {
     const names = (await readdir(dir, { recursive: true })) as string[];
     const files = names
