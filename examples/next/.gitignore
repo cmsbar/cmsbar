@@ -1,0 +1,15 @@
+# Build output + generated
+.next/
+next-env.d.ts
+package-lock.json
+
+# CMS source is assembled by the CLI (`npm run setup`), not committed - so this
+# example never forks the core. Only the host-specific wiring (app/layout,
+# app/page, globals.css, cms.config.ts, content/, config files) lives in git.
+/components/cmsbar/
+/lib/cmsbar/
+/lib/content.ts
+/app/api/cms/
+/app/cmsbar/
+/styles/
+/middleware.example.ts
