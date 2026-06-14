@@ -1,15 +1,17 @@
 <script setup lang="ts">
-// Demo home page (READ-ONLY content). V0 proves the content model renders in
-// Vue SSR: getContent() returns the typed content object bundled at build time
-// (content/site-content.json via lib/content.ts). resolvePageMeta (the
-// framework-neutral head-meta resolver from lib/cmsbar/page-meta-core) turns the
-// page's CMS pageMeta entry plus hardcoded fallbacks into a plain metadata
-// object we feed to useHead.
+// Demo home page. The eyebrow + SEO head come from getContent() (build-time
+// bundled content). The editable fields render through <T>, which resolves each
+// path from the CMSBar store: for anonymous visitors that is the same bundled
+// content, in the SSR HTML and inert; for a logged-in editor with an active
+// draft the same elements become editable in place (contenteditable), and
+// typing stages edits the bar can Save.
 //
-// This runs during SSR, so the content is baked into the rendered HTML - no
-// client JS assembles it. (The editing UI is a later phase; V0 is read-only.)
+// V2 wires text editing only: demo.title + demo.intro go through <T>. The
+// rich-text body and the info list are still read-only here (their editable
+// primitives - RichText, EditableInfoList - arrive in later Vue phases).
 import { getContent } from "@/lib/content";
 import { resolvePageMeta, EMPTY_PAGE_META } from "@/lib/cmsbar/page-meta-core";
+import T from "@/cmsbar/T.vue";
 
 const content = getContent();
 
@@ -40,8 +42,8 @@ useHead({
 <template>
   <main class="page">
     <p class="site">{{ siteName }}</p>
-    <h1 data-cms-path="demo.title">{{ demo?.title }}</h1>
-    <p class="intro" data-cms-path="demo.intro">{{ demo?.intro }}</p>
+    <T as="h1" path="demo.title" />
+    <T as="p" class="intro" path="demo.intro" />
     <!-- eslint-disable-next-line vue/no-v-html -->
     <div class="body" data-cms-path="demo.body" v-html="demo?.body"></div>
     <ul class="info">

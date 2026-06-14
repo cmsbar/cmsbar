@@ -21,6 +21,10 @@ export default defineNuxtConfig({
   ssr: true,
   compatibilityDate: "2025-01-01",
 
+  // Global CMSBar theme + bar/login chrome (plain CSS, no Tailwind). Ported
+  // from examples/sveltekit/src/styles/cmsbar.css.
+  css: ["@/assets/styles/cmsbar.css"],
+
   // Pin "@" / "~" to the project root so the copied core resolves both its
   // self-imports (@/lib/cmsbar/*) and the project config (@/cms.config).
   alias: {
