@@ -291,6 +291,13 @@ handlers + content model are the product, and the Svelte UI is a new client
 maintained by people who live there. **Effort: XL each. Not before the React
 adapters have adoption.**
 
+> **The protocol is specced and the server half works today** — see
+> [PROTOCOL.md](./PROTOCOL.md): mounting `createCmsApi` on SvelteKit
+> (`+server.ts`) / Nuxt (Nitro server route) is a few lines and is proven by the
+> same dispatcher the five React hosts use. What's deferred is only the native
+> Svelte/Vue **editing UI** (the ~6,500-line component layer), which is a rewrite
+> per framework — build it when demand proves it, not for a hypothetical user.
+
 ### Summary
 
 | Framework             | Adapter implements                                        | Stays 100% shared                          | Effort | Status                                 |
