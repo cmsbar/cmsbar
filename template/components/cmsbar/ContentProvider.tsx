@@ -20,7 +20,7 @@ import {
   listUploads,
   putUpload,
 } from "@/lib/cmsbar/uploadStorage";
-import { clampFolder } from "@/lib/cmsbar/media";
+import { clampFolder, MEDIA_ROOT } from "@/lib/cmsbar/media";
 import { cmsFetch } from "@/lib/cmsbar/cmsFetch";
 
 // Persisted (localStorage) shape - only serializable bits.
@@ -374,9 +374,12 @@ export function ContentProvider({
       setPendingUploads((u) => {
         const orphans: string[] = [];
         const remaining = u.filter((up) => {
-          if (up.repoPath === "public" + (value as string)) return true;
+          if (up.repoPath === MEDIA_ROOT + (value as string)) return true;
           // Different value than this upload's path → orphan.
-          if (overrides[path] === "/" + up.repoPath.replace(/^public\//, "")) {
+          if (
+            overrides[path] ===
+            "/" + up.repoPath.replace(new RegExp(`^${MEDIA_ROOT}/`), "")
+          ) {
             orphans.push(up.repoPath);
             return false;
           }
@@ -396,7 +399,7 @@ export function ContentProvider({
       if (!draftBranch) return;
       const safeFolder = clampFolder(folder);
       const name = `${slugFile(file.name)}-${Date.now()}.${extFor(file)}`;
-      const repoPath = `public/${safeFolder}/${name}`;
+      const repoPath = `${MEDIA_ROOT}/${safeFolder}/${name}`;
       const publicPath = `/${safeFolder}/${name}`;
       const blobUrl = URL.createObjectURL(file);
       blobRefs.current.add(blobUrl);

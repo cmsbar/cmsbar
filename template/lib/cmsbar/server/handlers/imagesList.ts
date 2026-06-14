@@ -1,6 +1,6 @@
 import { SESSION_COOKIE, verifySession } from "@/lib/cmsbar/session";
 import { ensureBranch, listTree } from "@/lib/cmsbar/backend/github";
-import { MEDIA_FOLDERS } from "@/lib/cmsbar/media";
+import { MEDIA_FOLDERS, MEDIA_ROOT } from "@/lib/cmsbar/media";
 import { type CmsHandler, json } from "@/lib/cmsbar/server/http";
 
 const IMAGE_EXT = /\.(jpe?g|png|webp|gif|svg)$/i;
@@ -20,7 +20,7 @@ export const imagesList: CmsHandler = async (_req, ctx) => {
     const images = entries
       .filter((e) => IMAGE_EXT.test(e.path))
       .map((e) => ({
-        path: "/" + e.path.replace(/^public\//, ""),
+        path: "/" + e.path.replace(new RegExp(`^${MEDIA_ROOT}/`), ""),
         repoPath: e.path,
         size: e.size,
       }))

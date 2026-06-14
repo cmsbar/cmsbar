@@ -3,14 +3,25 @@
 // client-side upload pathing - so the rules can never drift apart.
 
 import { cmsConfig } from "@/cms.config";
+import { mediaRootDir } from "@/lib/cmsbar/config";
+
+/**
+ * The repo directory static assets are served from (in front of the public URL
+ * path). Defaults to "public"; SvelteKit sets `mediaRoot: "static"`. This is
+ * the single literal that used to be hardcoded as "public" across the media
+ * code - now everything reads it from here so a non-Next host stays consistent.
+ */
+export const MEDIA_ROOT = mediaRootDir(cmsConfig);
 
 /** e.g. ["public/images", "public/media"] - normalized, no trailing slash. */
 export const MEDIA_FOLDERS = cmsConfig.mediaFolders.map((f) =>
   f.replace(/^\/+|\/+$/g, ""),
 );
 
-/** Folder roots relative to public/, e.g. ["images", "media"]. */
-export const MEDIA_ROOTS = MEDIA_FOLDERS.map((f) => f.replace(/^public\//, ""));
+/** Folder roots relative to the media root, e.g. ["images", "media"]. */
+export const MEDIA_ROOTS = MEDIA_FOLDERS.map((f) =>
+  f.replace(new RegExp(`^${MEDIA_ROOT}/`), ""),
+);
 
 /** The default upload target (first configured folder), e.g. "images". */
 export const DEFAULT_MEDIA_ROOT = MEDIA_ROOTS[0] ?? "images";

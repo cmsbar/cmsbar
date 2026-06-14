@@ -6,6 +6,7 @@ import { useHost, type CmsImageProps } from "./host";
 import { FocalPointOverlay, parsePos } from "./FocalPoint";
 import { Portal } from "./Portal";
 import { isSharedPath } from "@/lib/cmsbar/shared-paths";
+import { MEDIA_ROOT } from "@/lib/cmsbar/media";
 import { cn } from "@/lib/cmsbar/utils";
 import { cmsFetch, cmsApiBase } from "@/lib/cmsbar/cmsFetch";
 
@@ -31,7 +32,7 @@ function resolveSrcForBranch(src: string, branch: string | undefined): string {
   )
     return src;
   if (!src.startsWith("/images/")) return src;
-  const repoPath = `public${src}`;
+  const repoPath = `${MEDIA_ROOT}${src}`;
   return `${cmsApiBase()}/images/raw?branch=${encodeURIComponent(
     branch,
   )}&path=${encodeURIComponent(repoPath)}`;
