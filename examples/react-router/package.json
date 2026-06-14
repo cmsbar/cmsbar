@@ -1,0 +1,36 @@
+{
+  "name": "@cmsbar/example-react-router",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "react-router dev --port 3220",
+    "build": "react-router build",
+    "start": "NODE_ENV=production PORT=3220 react-router-serve ./build/server/index.js",
+    "typecheck": "react-router typegen && tsc"
+  },
+  "dependencies": {
+    "@react-router/node": "7.17.0",
+    "@react-router/serve": "7.17.0",
+    "isbot": "^5",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-router": "7.17.0",
+    "bcryptjs": "^3",
+    "clsx": "^2",
+    "tailwind-merge": "^3",
+    "lucide-react": "^0.562"
+  },
+  "devDependencies": {
+    "@react-router/dev": "7.17.0",
+    "@tailwindcss/vite": "^4",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/bcryptjs": "^2",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vite": "^7",
+    "vite-tsconfig-paths": "^6"
+  }
+}
