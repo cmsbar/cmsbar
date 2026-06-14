@@ -59,10 +59,12 @@ describe("verifyEdge mirrors session.ts", () => {
     const token = signSession({ user: "admin", issuedAt: Date.now() });
     const [payload, sig] = token.split(".");
 
-    // Same-length signature with one byte flipped → length-guard passes, the
-    // XOR-accumulate must still reject it.
-    const flipped =
-      sig.slice(0, -1) + (sig.at(-1) === "A" ? "B" : "A");
+    // Same-length signature with the FIRST char flipped → its 6 bits are all
+    // significant so the decoded bytes always differ (unlike the last char of a
+    // 32-byte HMAC, whose trailing bits are unused - flipping that can decode to
+    // the same bytes ~7% of the time). Length-guard passes; the XOR-accumulate
+    // must still reject it.
+    const flipped = (sig[0] === "A" ? "B" : "A") + sig.slice(1);
     expect(flipped).not.toBe(sig);
     expect(flipped.length).toBe(sig.length);
     expect(await isEditorToken(`${payload}.${flipped}`)).toBe(false);
