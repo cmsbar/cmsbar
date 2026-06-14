@@ -1,0 +1,37 @@
+{
+  "name": "@cmsbar/example-vite-spa",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "vite --port 3240",
+    "build": "vite build",
+    "start": "npm run build && NODE_ENV=production PORT=3240 tsx --env-file=.env.local server/index.ts",
+    "serve": "NODE_ENV=production PORT=3240 tsx --env-file=.env.local server/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "bcryptjs": "^3",
+    "clsx": "^2",
+    "hono": "^4.6.14",
+    "lucide-react": "^0.562",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "tailwind-merge": "^3"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4",
+    "@types/bcryptjs": "^2",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^5",
+    "tailwindcss": "^4",
+    "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5",
+    "vite": "^7",
+    "vite-tsconfig-paths": "^6"
+  }
+}

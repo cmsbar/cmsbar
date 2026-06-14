@@ -1,13 +1,15 @@
 # Framework support - dependency audit & adapter proposal
 
-> **Status (2026-06-12): proposal, nothing here is built.** Companion to
-> _Framework support_ in [PLAN.md](./PLAN.md) §6, which fixed the architecture:
-> **one monorepo, a neutral `@cms/core` + per-framework adapter packages** over a
-> small host interface - not a repo per framework. This doc does the work that
-> decision implies: audit the actual Next.js coupling file by file, spec each
-> target adapter against that audit, estimate effort honestly, and recommend an
-> order. The Phase 0 integration harness is a hard prerequisite and **does not
-> exist yet** - see _Sequencing_.
+> **Status (2026-06-14): building.** The host seam is implemented and frozen
+> (validated on Next + React Router + TanStack Start + a Vite SPA), the Phase 0
+> integration harness exists (handler-level tests, 152 green), and live example
+> hosts build + run green for **Next, React Router 7, TanStack Start, and the
+> Vite SPA** (`examples/`). Remaining: Astro, the `create-cmsbar` scaffolder,
+> and the SvelteKit/Nuxt rewrite tier. Companion to _Framework support_ in
+> [PLAN.md](./PLAN.md) §6, which fixed the architecture: **one monorepo, a
+> neutral core + per-framework adapters** over a small host interface - not a
+> repo per framework. This doc audits the Next.js coupling file by file, specs
+> each adapter, and recommends an order.
 
 ---
 
@@ -181,32 +183,49 @@ second host (React Router) proves it.
 - **Effort: S-M** - S if the React Router adapter landed first and the seam
   held; M if it didn't (which is exactly the information we want early).
 
-#### Vite + React SPA (+ server companion)
+#### Vite + React SPA (+ server companion) — SHIPPED
 
 The genuine architectural case PLAN.md flags: **no server means nowhere for
 `GITHUB_TOKEN`, session signing, or fs media listing to live.** The answer is
-not a thin adapter - it is a thin adapter _plus a small server you also ship_:
+not a thin adapter - it is a thin adapter _plus a small server you also ship_.
+Built and proven end-to-end in **`examples/vite-spa`** (client-only Vite SPA +
+a Hono companion on one origin):
 
-1. **Client adapter: trivial.** The HostProvider DOM defaults already cover an
-   SPA. `initialCms` comes from `GET /api/cms/session` on boot (the endpoint
-   exists), with a brief "checking session" state before the chrome mounts.
-2. **`@cms/server` - the companion (spec):**
-   - exports `createCmsApi(config): (req: Request) => Promise<Response>` - one
-     fetch-style dispatcher over the neutral core handlers - plus ready-made
-     mounts: Hono (`app.route("/api/cms", …)`) and Express
-     (`app.use("/api/cms", toNodeHandler(…))`).
+1. **Client adapter: trivial — there is none.** The `HostProvider` DOM defaults
+   already cover an SPA (`window.location` pathname + popstate, plain `<img>`,
+   `apiBase` `/api/cms`). The example mounts the neutral host directly:
+   `<HostProvider value={{ apiBase: "/api/cms" }}>`. `initialCms` comes from a
+   boot-time `GET /api/cms/session` (the endpoint exists), with a brief
+   "checking session" state before the chrome mounts.
+2. **`@cms/server` - the companion (shipped):**
+   - `createCmsApi(): (req: Request) => Promise<Response>` - one fetch-style
+     dispatcher over the neutral core handlers
+     (`lib/cmsbar/server/companion.ts`). Mount the whole API in one line; the
+     example uses Hono: `app.all("/api/cms/*", (c) => cms(c.req.raw))`. The
+     dispatcher strips `/api/cms` and 404s unknown paths itself.
    - Runtime: Node/Bun (the audit's `node:crypto` + `fs` rows). The
      filesystem-backed `media/list` needs a `public/` dir where the API runs -
-     configurable media root, or that tab degrades to branch-based listing.
-   - Deployment: **(a) same origin via reverse proxy** `/api/cms/* →` companion
-     (recommended - cookies just work; Vite dev gets a one-line
-     `server.proxy` entry), or (b) separate origin with CORS +
-     `SameSite=None` - works, but third-party-cookie headwinds make it the
-     documented fallback, not the default.
-- **Honest limitations to print in the SPA docs:** no SSR, so pageMeta/SEO
-  drawer edits affect nothing a crawler sees (keep the drawer, label it); the
-  teaser middleware has no equivalent; `rateLimit` is fine (the companion is a
-  long-lived process).
+     configurable media root, or that tab degrades to branch-based listing. The
+     example runs the companion with `tsx` (it resolves the `@/…` path alias at
+     runtime, same alias Vite uses for the client build).
+   - Deployment: **(a) same origin** - the companion serves the built SPA from
+     `dist/` (with an `index.html` SPA-fallback) AND the API on one port, so the
+     signed session cookie just works; Vite dev gets a one-line `server.proxy`
+     `/api/cms → companion` entry to preserve same-origin. This is what the
+     example does. Or (b) separate origin with CORS + `SameSite=None` - works,
+     but third-party-cookie headwinds make it the documented fallback.
+- **Honest limitations (printed in the example README):** this is a CLIENT-ONLY
+  SPA, no SSR. So:
+  - **pageMeta / SEO drawer edits affect nothing a crawler sees.** A curl of
+    `/` returns the static `index.html` shell + the bundle script, not the
+    rendered content. Keep the drawer (it still writes the metadata into the
+    content PR for a future SSR/SSG host), but label it as no-op for this target.
+  - **The teaser ("coming soon") middleware has no equivalent** - there is no
+    server render to gate, so `launch.mode` does not hide the site.
+  - **Content ships inside the JS bundle** (`getContent()` is an import-time JSON
+    read inlined at build), so the page renders only after the bundle boots.
+  - `rateLimit` **is fine** - the companion is a single long-lived process, so
+    the in-memory `Map` it relies on persists across requests.
 - **Effort: M** (client S, companion M). The companion is also the seed of the
   Phase 9 gateway story and is directly reusable by Astro - it earns its cost
   twice.

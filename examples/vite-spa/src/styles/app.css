@@ -1,0 +1,5 @@
+/* Tailwind v4 + the CMSBar stylesheet. `source("../")` points Tailwind's
+   content scanner at the whole src/ tree (this file lives in src/styles/), so
+   the utility classes the copied CMSBar components use are generated. */
+@import "tailwindcss" source("../");
+@import "./cmsbar.css";
