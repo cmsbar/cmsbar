@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview --port 3260",
     "start": "node build/index.js",
-    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@sveltejs/adapter-node": "^5",
@@ -20,8 +22,10 @@
     "@sveltejs/vite-plugin-svelte": "^5",
     "@types/bcryptjs": "^2",
     "@types/node": "^22",
+    "jsdom": "^25.0.1",
     "svelte-check": "^4",
     "typescript": "^5",
-    "vite": "^6"
+    "vite": "^6",
+    "vitest": "^3.2.6"
   }
 }
