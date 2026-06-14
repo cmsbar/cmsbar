@@ -1,0 +1,20 @@
+# Dependencies + build output
+node_modules/
+build/
+.svelte-kit/
+package-lock.json
+*.tsbuildinfo
+.DS_Store
+
+# Env files: commit only the template (.env.example). Copy it to .env.local and
+# fill in your CMSBar secrets to run the editor (root .gitignore handles .env*).
+.env
+.env.*
+!.env.example
+
+# CMS core is assembled by `npm run setup` (copied from ../../template), never
+# committed - so this example never forks the core. Only the host-specific
+# wiring under src/routes/, src/cms.config.ts, src/content/, src/app.html,
+# src/app.d.ts, scripts/, and the configs live in git.
+/src/lib/cmsbar/
+/src/lib/content.ts
