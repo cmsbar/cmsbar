@@ -2,7 +2,7 @@
 import { cmsConfig } from "@/cms.config";
 
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { useHost } from "./host";
 import { useCms } from "./ContentProvider";
 import { metaKey, META_PAGES } from "@/lib/cmsbar/page-meta";
 import { cn } from "@/lib/cmsbar/utils";
@@ -19,7 +19,7 @@ export function PageMetaDrawer({
   canEdit: boolean;
 }) {
   const { get, addEdit } = useCms();
-  const pathname = usePathname();
+  const { pathname } = useHost();
   const key = metaKey(pathname);
   const [socialView, setSocialView] = useState<"fb" | "x">("fb");
 

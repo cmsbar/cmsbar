@@ -2,7 +2,7 @@
 import { PREVIEW_LS_KEY } from "@/lib/cmsbar/keys";
 
 import { useEffect, useRef, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useHost } from "./host";
 import { cmsConfig } from "@/cms.config";
 import { publishingMode } from "@/lib/cmsbar/config";
 import { useCms } from "./ContentProvider";
@@ -47,8 +47,7 @@ export function CmsBar() {
     applyCommitted,
     setPreview,
   } = useCms();
-  const pathname = usePathname();
-  const router = useRouter();
+  const { pathname, navigate } = useHost();
   const [busy, setBusy] = useState<"saving" | "starting" | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Transient in-bar confirmation after a direct publish (auto-clears).
@@ -402,7 +401,7 @@ export function CmsBar() {
         )}
         {cms.draft.pagePath && cms.draft.pagePath !== pathname && (
           <button
-            onClick={() => router.push(cms.draft!.pagePath!)}
+            onClick={() => navigate(cms.draft!.pagePath!)}
             className="rounded-full bg-white/20 hover:bg-white/30 text-white text-[10px] px-2 py-0.5 underline decoration-dotted underline-offset-2"
             title={`This draft was started on ${cms.draft.pagePath}. Click to navigate there.`}
           >

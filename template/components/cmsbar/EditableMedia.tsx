@@ -7,7 +7,7 @@ import { FocalPointOverlay, parsePos } from "./FocalPoint";
 import { Portal } from "./Portal";
 import { isSharedPath } from "./shared-paths";
 import { cn } from "@/lib/cmsbar/utils";
-import { cmsFetch } from "@/lib/cmsbar/cmsFetch";
+import { cmsFetch, cmsApiBase } from "@/lib/cmsbar/cmsFetch";
 
 type Props = {
   path: string;
@@ -155,7 +155,7 @@ export function resolveForBranch(
   // still preview via their blob: URL.
   if (/\.(mp4|webm|ogg|mov|m4v)$/i.test(src)) return src;
   const repoPath = `public${src}`;
-  return `/api/cms/images/raw?branch=${encodeURIComponent(
+  return `${cmsApiBase()}/images/raw?branch=${encodeURIComponent(
     branch,
   )}&path=${encodeURIComponent(repoPath)}`;
 }
