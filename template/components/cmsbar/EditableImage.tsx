@@ -5,7 +5,7 @@ import { useCms } from "./ContentProvider";
 import { useHost, type CmsImageProps } from "./host";
 import { FocalPointOverlay, parsePos } from "./FocalPoint";
 import { Portal } from "./Portal";
-import { isSharedPath } from "./shared-paths";
+import { isSharedPath } from "@/lib/cmsbar/shared-paths";
 import { cn } from "@/lib/cmsbar/utils";
 import { cmsFetch, cmsApiBase } from "@/lib/cmsbar/cmsFetch";
 

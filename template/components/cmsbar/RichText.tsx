@@ -9,7 +9,7 @@ import {
 } from "react";
 import { useCms } from "./ContentProvider";
 import { Portal } from "./Portal";
-import { isSharedPath } from "./shared-paths";
+import { isSharedPath } from "@/lib/cmsbar/shared-paths";
 import { cn } from "@/lib/cmsbar/utils";
 import { cmsConfig } from "@/cms.config";
 
