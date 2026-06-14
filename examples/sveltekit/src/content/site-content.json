@@ -31,6 +31,12 @@
     "title": "CMSBar runs in this SvelteKit host",
     "intro": "This heading and paragraph are server-rendered by SvelteKit from the framework-neutral content model. The +page.server.ts load reads getContent() on the server and passes it to +page.svelte - so the content is in the HTML, not assembled by client JS. The whole CMSBar API is mounted at /api/cms/* through a single catch-all +server.ts that forwards the raw web Request to createCmsApi().",
     "image": "/images/demo.svg",
-    "media": "https://www.youtube.com/embed/aqz-KE-bpKQ"
+    "media": "https://www.youtube.com/embed/aqz-KE-bpKQ",
+    "body": "<h2>Rich text, edited in place</h2><p>This block renders <strong>real HTML</strong> from the content model. Log in as an editor and a floating toolbar appears on selection: <em>headings</em>, <u>lists</u>, and <a href=\"https://svelte.dev\">links</a>.</p><ul><li>Bold, italic, underline</li><li>H2 / H3 / H4 block formats</li><li>Bulleted and numbered lists</li></ul>",
+    "info": [
+      { "icon": "Clock", "label": "Hours", "value": "Mon–Fri, 9–17h" },
+      { "icon": "MapPin", "label": "Address", "value": "123 Example St" },
+      { "icon": "Mail", "label": "Email", "value": "hello@example.com" }
+    ]
   }
 }
