@@ -11,7 +11,7 @@ import { PageMetaDrawer } from "./PageMetaDrawer";
 import { SettingsDrawer } from "./SettingsDrawer";
 import { IssuesButton } from "./IssuesButton";
 import { CmsTour, TOUR_OPEN_EVENT } from "./CmsTour";
-import { pageNameForPath } from "./pageName";
+import { pageNameForPath } from "@/lib/cmsbar/pageName";
 import { cn } from "@/lib/cmsbar/utils";
 import { cmsFetch } from "@/lib/cmsbar/cmsFetch";
 

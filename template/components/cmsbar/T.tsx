@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, createElement } from "react";
 import { useCms } from "./ContentProvider";
 import { Portal } from "./Portal";
 import { RichTextToolbar, sanitizeRichText } from "./RichText";
-import { isSharedPath } from "./shared-paths";
+import { isSharedPath } from "@/lib/cmsbar/shared-paths";
 import { cn } from "@/lib/cmsbar/utils";
 
 type Props = {
