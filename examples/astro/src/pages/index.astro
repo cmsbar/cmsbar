@@ -1,0 +1,56 @@
+---
+// Demo home page with EDITOR-GATED HYDRATION (the doc's option (a)).
+//
+// The content region is authored once as the React island CmsApp. Here we read
+// the editor session cookie SERVER-SIDE (getServerSession off Astro.request)
+// and conditionally apply the client directive:
+//
+//   - PUBLIC visitor (no/invalid cookie): render <CmsApp /> with NO client
+//     directive. Astro server-renders it to static HTML and ships ZERO JS for
+//     it. CmsBar returns null when unauthenticated, so the public page is the
+//     content only - no CMS bundle, no hydration script. (Static, SEO-friendly.)
+//
+//   - EDITOR (valid cookie): render <CmsApp client:load /> so Astro hydrates the
+//     island and editing works in place.
+//
+// Props are plain serializable values (content JSON + initialCms object), which
+// is required to cross the Astro -> island boundary.
+//
+// SEO note: the editor-gated island is the *editor's* page; public visitors and
+// crawlers always get fully server-rendered static HTML (the content is in the
+// markup, not assembled by client JS), so this is SEO-equivalent to a plain
+// static page - unlike a pure SPA where content depends on client hydration.
+
+import Base from "@/layouts/Base.astro";
+import { getContent } from "@/lib/content";
+import { getServerSession } from "@/cmsbar/getServerSession";
+import { CmsApp } from "@/cmsbar/CmsApp";
+import { getPageMeta } from "@/lib/cmsbar/page-meta";
+import { resolvePageMeta } from "@/lib/cmsbar/page-meta-core";
+
+export const prerender = false;
+
+const initialCms = getServerSession(Astro.request);
+const content = getContent();
+const isEditor = initialCms.authenticated; // editor cookie present + valid
+
+const meta = resolvePageMeta(getPageMeta("home"), {
+  title: "CMSBar runs in this Astro host",
+  description: "A site edited in place with CMSBar.",
+});
+---
+
+<Base
+  title={meta.title}
+  description={meta.description}
+  robots={meta.robots ? "noindex, nofollow" : undefined}
+  canonical={meta.canonical}
+>
+  {
+    isEditor ? (
+      <CmsApp client:load content={content} initialCms={initialCms} />
+    ) : (
+      <CmsApp content={content} initialCms={initialCms} />
+    )
+  }
+</Base>
