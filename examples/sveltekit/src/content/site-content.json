@@ -30,6 +30,7 @@
   "demo": {
     "title": "CMSBar runs in this SvelteKit host",
     "intro": "This heading and paragraph are server-rendered by SvelteKit from the framework-neutral content model. The +page.server.ts load reads getContent() on the server and passes it to +page.svelte - so the content is in the HTML, not assembled by client JS. The whole CMSBar API is mounted at /api/cms/* through a single catch-all +server.ts that forwards the raw web Request to createCmsApi().",
-    "image": "/images/demo.svg"
+    "image": "/images/demo.svg",
+    "media": "https://www.youtube.com/embed/aqz-KE-bpKQ"
   }
 }

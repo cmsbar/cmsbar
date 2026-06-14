@@ -32,7 +32,7 @@ import {
   listUploads,
   putUpload,
 } from "@/lib/cmsbar/uploadStorage";
-import { clampFolder } from "@/lib/cmsbar/media";
+import { clampFolder, MEDIA_ROOT } from "@/lib/cmsbar/media";
 import { cmsFetch } from "@/lib/cmsbar/cmsFetch";
 
 // ── Public types (mirrors of the React provider's exports) ──────────────────
@@ -327,9 +327,12 @@ export class CmsStore {
     const draftBranch = this.#cms.draft?.branch;
     const orphans: string[] = [];
     const remaining = this.#pendingUploads.filter((up) => {
-      if (up.repoPath === "public" + (value as string)) return true;
+      if (up.repoPath === MEDIA_ROOT + (value as string)) return true;
       // Different value than this upload's path → orphan.
-      if (prevValue === "/" + up.repoPath.replace(/^public\//, "")) {
+      if (
+        prevValue ===
+        "/" + up.repoPath.replace(new RegExp(`^${MEDIA_ROOT}/`), "")
+      ) {
         orphans.push(up.repoPath);
         return false;
       }
@@ -347,7 +350,7 @@ export class CmsStore {
     if (!draftBranch) return;
     const safeFolder = clampFolder(folder);
     const name = `${slugFile(file.name)}-${Date.now()}.${extFor(file)}`;
-    const repoPath = `public/${safeFolder}/${name}`;
+    const repoPath = `${MEDIA_ROOT}/${safeFolder}/${name}`;
     const publicPath = `/${safeFolder}/${name}`;
     const blobUrl = URL.createObjectURL(file);
     this.#blobRefs.add(blobUrl);
