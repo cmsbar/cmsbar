@@ -15,7 +15,11 @@ export const patchIssue: CmsHandler = async (req, ctx) => {
     return json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const raw = new URL(req.url).pathname.split("/").pop() ?? "";
+  // The dispatcher accepts a trailing slash (normalizes it for matching), so
+  // strip it here too before taking the last segment - otherwise /issues/5/
+  // pops an empty segment.
+  const raw =
+    new URL(req.url).pathname.replace(/\/+$/, "").split("/").pop() ?? "";
   const number = Number(raw);
   if (!Number.isInteger(number) || number <= 0) {
     return json(

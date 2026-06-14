@@ -65,6 +65,26 @@ describe("patchIssue handler", () => {
     expect(gh.addIssueLabels).not.toHaveBeenCalled();
   });
 
+  it("parses the issue number from /issues/5 and /issues/5/ alike", async () => {
+    // The dispatcher normalizes a trailing slash before matching, so the handler
+    // must strip it too - otherwise pop() yields "" → Number("") === 0 → 400.
+    const noSlash = await patchIssue(req(5, { status: "closed" }), ctx(token()));
+    expect(noSlash.status).toBe(200);
+    expect(gh.setIssueState).toHaveBeenCalledWith(5, "closed");
+
+    vi.clearAllMocks();
+
+    const trailing = new Request("http://localhost/api/cms/issues/5/", {
+      method: "PATCH",
+      body: JSON.stringify({ status: "closed" }),
+      headers: { "content-type": "application/json" },
+    });
+    const withSlash = await patchIssue(trailing, ctx(token()));
+    expect(withSlash.status).toBe(200);
+    expect(await withSlash.json()).toEqual({ ok: true });
+    expect(gh.setIssueState).toHaveBeenCalledWith(5, "closed");
+  });
+
   it("reopens an issue: sets open state and removes the in-progress label", async () => {
     const res = await patchIssue(req(8, { status: "open" }), ctx(token()));
     expect(res.status).toBe(200);
