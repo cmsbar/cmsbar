@@ -22,6 +22,11 @@ export const cmsConfig = defineCmsConfig({
   // Folders editors may upload to / delete from. First entry is the default.
   mediaFolders: ["static/images", "static/media"],
 
+  // SvelteKit serves static assets from `static/` (not Next's `public/`). The
+  // CMS media code reads this so repo paths, the fs media list, and the image
+  // proxy all line up with where SvelteKit actually serves files from.
+  mediaRoot: "static",
+
   // One draft = one `<branchPrefix><slug>` branch = one PR.
   branchPrefix: "cms/",
 

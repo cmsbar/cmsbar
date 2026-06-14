@@ -21,6 +21,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/lib/cmsbar/config", () => ({
   publishingMode: () => "direct" as const,
   defineCmsConfig: <T>(config: T): T => config,
+  // media.ts (pulled in transitively via the store's clampFolder/MEDIA_ROOT
+  // import) reads the static-asset root through this helper; keep the default.
+  mediaRootDir: (c: { mediaRoot?: string }) => c.mediaRoot ?? "public",
 }));
 
 import { createCmsStore } from "./content.svelte";

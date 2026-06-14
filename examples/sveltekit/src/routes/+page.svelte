@@ -7,6 +7,8 @@
   // place (contenteditable), and typing stages edits the bar can Save.
   import type { PageData } from "./$types";
   import T from "@/cmsbar/T.svelte";
+  import EditableImage from "@/cmsbar/EditableImage.svelte";
+  import EditableMedia from "@/cmsbar/EditableMedia.svelte";
 
   let { data }: { data: PageData } = $props();
 </script>
@@ -31,4 +33,36 @@
   <p class="eyebrow">{data.siteName}</p>
   <T as="h1" path="demo.title" />
   <T as="p" path="demo.intro" />
+
+  <!-- EditableImage: object-cover fill, so editors can drag the focal point.
+       The positioned wrapper gives the absolutely-filled <img> a box. -->
+  <figure class="demo-image">
+    <EditableImage path="demo.image" alt="CMSBar demo image" fill />
+  </figure>
+
+  <!-- EditableMedia: image / video / embed in one slot. The positioned wrapper
+       gives the absolutely-filled media a 16:9 box. -->
+  <div class="demo-media">
+    <EditableMedia path="demo.media" />
+  </div>
 </main>
+
+<style>
+  .demo-image {
+    position: relative;
+    margin: 2rem 0 0;
+    width: 100%;
+    aspect-ratio: 1200 / 630;
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+  .demo-media {
+    position: relative;
+    margin: 1.5rem 0 0;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    background: #0f172a;
+  }
+</style>
