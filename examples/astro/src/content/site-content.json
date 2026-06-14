@@ -1,0 +1,35 @@
+{
+  "site": {
+    "name": "CMSBar Astro example",
+    "description": "A site edited in place with CMSBar, running on Astro with editor-gated hydration."
+  },
+  "launch": {
+    "mode": "live"
+  },
+  "favicon": "",
+  "pageMeta": {
+    "home": {
+      "title": "CMSBar runs in this Astro host",
+      "description": "A site edited in place with CMSBar, running on Astro with editor-gated hydration.",
+      "ogImage": "",
+      "ogTitle": "",
+      "ogDescription": "",
+      "canonical": "",
+      "noindex": false
+    }
+  },
+  "nav": [{ "name": "Home", "href": "/" }],
+  "home": {
+    "hero": {
+      "badge": "Now editable in place",
+      "headline": "Click anything. Change it. Ship it as a PR.",
+      "subtitle": "This text is editable - log in at /cmsbar/login and click it.",
+      "cta": "Get started"
+    }
+  },
+  "demo": {
+    "title": "CMSBar runs in this Astro host",
+    "intro": "This paragraph and the heading above are rendered by the framework-neutral CMS primitives. Public visitors get this as static HTML with zero CMS JavaScript; when an editor session cookie is detected the same content region is shipped as a hydrated React island so editing works in place.",
+    "image": "/images/demo.svg"
+  }
+}

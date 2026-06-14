@@ -1,0 +1,14 @@
+---
+// CMSBar login page. The form is interactive, so it is mounted as a hydrated
+// React island (client:load). On success it POSTs to /api/cms/login (which sets
+// the signed session cookie) and full-page navigates to "/", where the
+// server-side editor gating then ships the hydrated editor island.
+import Base from "@/layouts/Base.astro";
+import { LoginForm } from "@/cmsbar/LoginForm";
+
+export const prerender = false;
+---
+
+<Base title="CMSBar login">
+  <LoginForm client:load />
+</Base>

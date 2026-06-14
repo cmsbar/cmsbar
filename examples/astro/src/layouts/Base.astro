@@ -1,0 +1,30 @@
+---
+// The document shell. Imports the app stylesheet (Tailwind + cmsbar.css), which
+// Astro bundles and links into the page. The page title comes from the
+// CMS-editable page metadata, resolved server-side.
+import "@/styles/app.css";
+
+interface Props {
+  title: string;
+  description?: string;
+  robots?: string;
+  canonical?: string;
+}
+
+const { title, description, robots, canonical } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    {robots && <meta name="robots" content={robots} />}
+    {canonical && <link rel="canonical" href={canonical} />}
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
