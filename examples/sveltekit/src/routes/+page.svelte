@@ -9,6 +9,8 @@
   import T from "@/cmsbar/T.svelte";
   import EditableImage from "@/cmsbar/EditableImage.svelte";
   import EditableMedia from "@/cmsbar/EditableMedia.svelte";
+  import RichText from "@/cmsbar/RichText.svelte";
+  import EditableInfoList from "@/cmsbar/EditableInfoList.svelte";
 
   let { data }: { data: PageData } = $props();
 </script>
@@ -45,6 +47,21 @@
   <div class="demo-media">
     <EditableMedia path="demo.media" />
   </div>
+
+  <!-- RichText: a block-level (div) editor. In view mode it renders saved HTML
+       through .cmsbar-prose; in edit mode it becomes contenteditable with a
+       floating selection toolbar (headings, lists, link, bold/italic/underline). -->
+  <section class="demo-body">
+    <RichText as="div" path="demo.body" />
+  </section>
+
+  <!-- EditableInfoList: a repeatable icon + label + value block. Editors can
+       add/remove items, drag to reorder, edit each field inline, and pick an
+       icon from the curated set. -->
+  <section class="demo-info">
+    <h2 class="demo-info-title">Informacije</h2>
+    <EditableInfoList path="demo.info" />
+  </section>
 </main>
 
 <style>
@@ -64,5 +81,14 @@
     border-radius: 0.75rem;
     overflow: hidden;
     background: #0f172a;
+  }
+  .demo-body {
+    margin: 2.5rem 0 0;
+  }
+  .demo-info {
+    margin: 2.5rem 0 0;
+  }
+  .demo-info-title {
+    margin: 0 0 1.25rem;
   }
 </style>
