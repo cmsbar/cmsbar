@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Image, { type ImageProps } from "next/image";
 import { useCms } from "./ContentProvider";
+import { useHost, type CmsImageProps } from "./host";
 import { FocalPointOverlay, parsePos } from "./FocalPoint";
 import { Portal } from "./Portal";
 import { isSharedPath } from "./shared-paths";
 import { cn } from "@/lib/cmsbar/utils";
-import { cmsFetch } from "@/lib/cmsbar/cmsFetch";
+import { cmsFetch, cmsApiBase } from "@/lib/cmsbar/cmsFetch";
 
-type Props = Omit<ImageProps, "src"> & {
+type Props = Omit<CmsImageProps, "src"> & {
   path: string;
   fallback?: string;
   /** Content path holding an object-position string ("50% 30%"). When set and
@@ -32,7 +32,7 @@ function resolveSrcForBranch(src: string, branch: string | undefined): string {
     return src;
   if (!src.startsWith("/images/")) return src;
   const repoPath = `public${src}`;
-  return `/api/cms/images/raw?branch=${encodeURIComponent(
+  return `${cmsApiBase()}/images/raw?branch=${encodeURIComponent(
     branch,
   )}&path=${encodeURIComponent(repoPath)}`;
 }
@@ -46,6 +46,7 @@ export function EditableImage({
   ...rest
 }: Props) {
   const { get, editMode, cms, addEdit } = useCms();
+  const { Image: HostImage } = useHost();
   const rawSrc = (get(path) as string | undefined) ?? fallback ?? "";
 
   // Branch to resolve from: preview > active draft > none (use bundled path).
@@ -146,7 +147,7 @@ export function EditableImage({
         }}
       />
     ) : (
-      <Image
+      <HostImage
         src={src}
         alt={alt ?? ""}
         className={className}

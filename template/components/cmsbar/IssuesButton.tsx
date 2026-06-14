@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { useHost } from "./host";
 import { IssuesPanel } from "./IssuesPanel";
 import { visibleOnPage, type ParsedIssue } from "@/lib/cmsbar/backend/issues";
 import { cmsFetch } from "@/lib/cmsbar/cmsFetch";
@@ -23,7 +23,7 @@ function mergeWithPending(
 // The 🐛 Issues button rendered in the CMS bar (every mode). Owns the issue
 // list so it can show a per-page open-count badge and hand the data to the panel.
 export function IssuesButton() {
-  const pathname = usePathname();
+  const { pathname } = useHost();
   const [open, setOpen] = useState(false);
   const [issues, setIssues] = useState<ParsedIssue[]>([]);
   const [loading, setLoading] = useState(false);
