@@ -63,6 +63,30 @@ describe("handleCmsRequest dispatcher", () => {
     expect(await res.json()).toEqual({ authenticated: false });
   });
 
+  it("does not mis-strip sibling prefixes of the base (boundary check)", async () => {
+    // basePath "/api/cms" must not swallow "/api/cms-internal" or "/api/cmsx";
+    // a bare startsWith would slice these into "/-internal/..." / "/x/...".
+    for (const p of [
+      "/api/cms-internal/session",
+      "/api/cmsx/session",
+      "/api/cmscommit",
+    ]) {
+      const res = await handleCmsRequest(req("GET", p));
+      expect(res.status).toBe(404);
+    }
+    // The genuinely-mounted path still routes after the boundary fix.
+    const ok = await handleCmsRequest(req("GET", "/api/cms/session"));
+    expect(ok.status).toBe(200);
+    expect(await ok.json()).toEqual({ authenticated: false });
+  });
+
+  it("routes the trailing-slash form /issues/5/ to patchIssue", async () => {
+    // The dispatcher normalizes the trailing slash, so the param route matches
+    // and dispatches (the handler then 401s without a session).
+    const res = await handleCmsRequest(req("PATCH", "/api/cms/issues/5/"));
+    expect(res.status).toBe(401);
+  });
+
   it("every route in the table has a handler", () => {
     expect(CMS_ROUTES.length).toBe(18); // 17 routes; /issues has GET + POST
     for (const r of CMS_ROUTES) expect(typeof r.handler).toBe("function");

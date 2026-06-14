@@ -20,11 +20,25 @@ function prune(now: number): void {
   }
 }
 
-/** The client IP for rate-limiting. Coolify/Traefik sets x-forwarded-for. */
+/**
+ * The client IP for login rate-limiting / lockout. The leftmost
+ * X-Forwarded-For entry is client-supplied and spoofable, so an attacker could
+ * rotate it per request to evade the per-IP lockout. Prefer a single-value
+ * header that a trusted proxy sets (x-real-ip, then cf-connecting-ip); only
+ * fall back to the leftmost X-Forwarded-For when neither is present.
+ *
+ * See docs/SETUP.md: this trusts these headers, so behind a custom proxy the
+ * operator must ensure a trusted client-IP header is set (and inbound copies of
+ * it are stripped).
+ */
 export function clientIp(req: Request): string {
+  const realIp = req.headers.get("x-real-ip");
+  if (realIp) return realIp.trim();
+  const cfIp = req.headers.get("cf-connecting-ip");
+  if (cfIp) return cfIp.trim();
   const fwd = req.headers.get("x-forwarded-for");
   if (fwd) return fwd.split(",")[0].trim();
-  return req.headers.get("x-real-ip") ?? "unknown";
+  return "unknown";
 }
 
 /** Returns the number of seconds the caller must wait, or 0 if allowed. */

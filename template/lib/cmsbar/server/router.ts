@@ -85,7 +85,12 @@ export async function handleCmsRequest(
   const base = (options.basePath ?? DEFAULT_BASE).replace(/\/+$/, "");
   const url = new URL(req.url);
   let path = url.pathname;
-  if (base && path.startsWith(base)) path = path.slice(base.length);
+  // Only strip the base when the path equals it or is genuinely nested under
+  // base + "/" - a bare startsWith would mis-strip sibling prefixes like
+  // /api/cms-internal or /api/cmsx.
+  if (base && (path === base || path.startsWith(base + "/"))) {
+    path = path.slice(base.length);
+  }
   if (!path.startsWith("/")) path = "/" + path;
   path = path.replace(/\/+$/, "") || "/";
 

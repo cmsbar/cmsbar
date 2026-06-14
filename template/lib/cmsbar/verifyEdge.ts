@@ -49,8 +49,21 @@ export async function isEditorToken(
     key,
     new TextEncoder().encode(payload),
   );
-  const expected = b64urlFromBytes(new Uint8Array(mac));
-  if (expected !== sig) return false;
+  // Constant-time compare of the HMAC bytes (crypto.timingSafeEqual from
+  // node:crypto is unavailable in the edge runtime, so length-guard then
+  // XOR-accumulate over the decoded byte arrays). Mirrors verifySession in
+  // session.ts, which uses crypto.timingSafeEqual for the same comparison.
+  const macBytes = new Uint8Array(mac);
+  let sigBytes: Uint8Array;
+  try {
+    sigBytes = fromB64url(sig);
+  } catch {
+    return false;
+  }
+  if (sigBytes.length !== macBytes.length) return false;
+  let diff = 0;
+  for (let i = 0; i < macBytes.length; i++) diff |= macBytes[i] ^ sigBytes[i];
+  if (diff !== 0) return false;
 
   try {
     const json = new TextDecoder().decode(fromB64url(payload));

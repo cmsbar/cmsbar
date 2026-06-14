@@ -54,6 +54,25 @@ describe("verifyEdge mirrors session.ts", () => {
     expect(await isEditorToken("garbage.token")).toBe(false);
     expect(await isEditorToken(undefined)).toBe(false);
   });
+
+  it("rejects a forged signature via the constant-time compare", async () => {
+    const token = signSession({ user: "admin", issuedAt: Date.now() });
+    const [payload, sig] = token.split(".");
+
+    // Same-length signature with one byte flipped → length-guard passes, the
+    // XOR-accumulate must still reject it.
+    const flipped =
+      sig.slice(0, -1) + (sig.at(-1) === "A" ? "B" : "A");
+    expect(flipped).not.toBe(sig);
+    expect(flipped.length).toBe(sig.length);
+    expect(await isEditorToken(`${payload}.${flipped}`)).toBe(false);
+
+    // A shorter, valid-b64url signature → caught by the length guard.
+    expect(await isEditorToken(`${payload}.AAAA`)).toBe(false);
+
+    // An empty signature is rejected before the compare.
+    expect(await isEditorToken(`${payload}.`)).toBe(false);
+  });
 });
 
 describe("slugify", () => {
