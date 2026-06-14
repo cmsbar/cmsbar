@@ -1,0 +1,391 @@
+/* ── CMSBar theme ────────────────────────────────────────────────────────────
+   Theme variables copied verbatim from template/styles/cmsbar.css. Every
+   brand-colored piece of CMSBar chrome reads these; override them after this
+   import to re-theme.
+
+   The React hosts lay out the bar with Tailwind utility classes. This
+   SvelteKit example ships no Tailwind, so the layout/chrome rules below are
+   authored as plain CSS (prefixed .cmsbar-*) that reproduces the bar's look
+   without a utility framework. The variables, the shared-highlight rule and
+   the .cmsbar-prose defaults are identical to the template.                  */
+
+:root {
+  /* Primary accent: action buttons, page-local editable outlines. */
+  --cmsbar-accent: #db2777; /* pink-600 */
+  --cmsbar-accent-strong: #be185d; /* pink-700 - hover */
+  --cmsbar-accent-soft: rgba(219, 39, 119, 0.16); /* badges, tints */
+  --cmsbar-accent-text: #fbcfe8; /* badge text on dark chrome */
+  --cmsbar-ring: rgba(244, 114, 182, 0.6); /* idle editable outline */
+
+  /* Shared-element highlight: content that appears on more than one page. */
+  --cmsbar-shared: #fbbf24; /* amber-400 */
+  --cmsbar-shared-strong: #f59e0b; /* amber-500 */
+  --cmsbar-shared-soft: rgba(251, 191, 36, 0.12);
+  --cmsbar-shared-text: #fde68a;
+
+  /* Secondary/info accent: selected states in drawers, info text. */
+  --cmsbar-info: #2563eb; /* blue-600 */
+  --cmsbar-info-soft: rgba(37, 99, 235, 0.08);
+
+  /* Icon accent in editable info lists. */
+  --cmsbar-icon: #f59e0b;
+
+  /* Rich-text content defaults (.cmsbar-prose below). */
+  --cmsbar-prose-heading-weight: 700;
+  --cmsbar-prose-link: var(--cmsbar-info);
+}
+
+/* Lights up every shared element when the bar's "Shared" toggle is on. */
+body.cms-highlight-shared [data-cms-shared="true"] {
+  outline: 2px dashed var(--cmsbar-shared-strong);
+  outline-offset: 2px;
+  background: var(--cmsbar-shared-soft);
+}
+
+/* ── Editable text primitive (T.svelte, edit mode) ──────────────────────────
+   Mirrors T.tsx's outline behaviour: a dashed idle ring that brightens on
+   hover/focus, and the amber "shared" treatment for site-wide content. */
+
+.cmsbar-editable {
+  outline: none;
+  border-radius: 4px;
+  padding: 0 2px;
+  box-shadow: 0 0 0 1px var(--cmsbar-ring);
+  transition: box-shadow 0.15s ease;
+}
+.cmsbar-editable:hover {
+  box-shadow: 0 0 0 1px var(--cmsbar-accent);
+}
+.cmsbar-editable:focus {
+  box-shadow: 0 0 0 2px var(--cmsbar-accent);
+}
+.cmsbar-editable[data-cms-shared="true"] {
+  background: var(--cmsbar-shared-soft);
+  box-shadow: 0 0 0 2px var(--cmsbar-shared);
+}
+.cmsbar-editable[data-cms-shared="true"]:hover,
+.cmsbar-editable[data-cms-shared="true"]:focus {
+  box-shadow: 0 0 0 2px var(--cmsbar-shared-strong);
+}
+
+/* ── Bar chrome (CmsBar.svelte) ─────────────────────────────────────────────
+   Plain-CSS reproduction of the dark pill bar and top strip the React bar
+   builds with Tailwind utilities. */
+
+.cmsbar-bar {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.95); /* slate-900/95 */
+  color: #fff;
+  padding: 0.5rem 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  font-size: 0.875rem;
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+.cmsbar-brand {
+  font-weight: 600;
+}
+.cmsbar-divider {
+  width: 1px;
+  height: 1rem;
+  background: rgba(255, 255, 255, 0.2);
+}
+.cmsbar-badge {
+  border-radius: 9999px;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.cmsbar-badge-live {
+  background: rgba(16, 185, 129, 0.2);
+  color: #a7f3d0;
+}
+.cmsbar-badge-draft {
+  background: var(--cmsbar-accent-soft);
+  color: var(--cmsbar-accent-text);
+}
+.cmsbar-badge-direct {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fde68a;
+}
+.cmsbar-title {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.75rem;
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cmsbar-btn {
+  border: 0;
+  cursor: pointer;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  font-family: inherit;
+}
+.cmsbar-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.cmsbar-btn-primary {
+  background: var(--cmsbar-accent);
+  font-weight: 600;
+}
+.cmsbar-btn-primary:hover {
+  background: var(--cmsbar-accent-strong);
+}
+.cmsbar-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cmsbar-notice {
+  color: #6ee7b7;
+  font-size: 0.75rem;
+  max-width: 18rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Top draft strip. */
+.cmsbar-strip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 99;
+  font-size: 0.75rem;
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.375rem 1rem;
+  background: var(--cmsbar-accent);
+  color: #fff;
+}
+.cmsbar-strip strong {
+  max-width: 24rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cmsbar-strip-count {
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 10px;
+  padding: 0.125rem 0.5rem;
+}
+
+/* Preview banner (review-flow Save lands here). */
+.cmsbar-preview-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #f59e0b;
+  color: #451a03;
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+}
+.cmsbar-preview-banner button {
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  font: inherit;
+}
+.cmsbar-badge-preview {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fde68a;
+}
+
+/* Error toast above the bar. */
+.cmsbar-error {
+  position: fixed;
+  bottom: 5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 110;
+  max-width: 28rem;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+.cmsbar-error-msg {
+  flex: 1;
+  word-break: break-word;
+}
+.cmsbar-error button {
+  background: none;
+  border: 0;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  font: inherit;
+}
+.cmsbar-error button:hover {
+  color: #fff;
+}
+
+/* ── Login form (CmsBar.svelte, !authenticated) ─────────────────────────────
+   The React hosts put login on a dedicated /cmsbar/login page; here the bar
+   renders the form inline (per the S2 brief) as a small fixed card. */
+
+.cmsbar-login {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 18rem;
+  background: rgba(15, 23, 42, 0.95);
+  color: #fff;
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  font-size: 0.875rem;
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+.cmsbar-login h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.cmsbar-login input {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 0.375rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  padding: 0.4rem 0.6rem;
+  font: inherit;
+  outline: none;
+}
+.cmsbar-login input:focus {
+  box-shadow: 0 0 0 2px var(--cmsbar-accent);
+}
+.cmsbar-login button {
+  width: 100%;
+  border: 0;
+  cursor: pointer;
+  border-radius: 0.375rem;
+  background: var(--cmsbar-accent);
+  color: #fff;
+  font-weight: 600;
+  padding: 0.45rem 0.75rem;
+  font: inherit;
+}
+.cmsbar-login button:hover {
+  background: var(--cmsbar-accent-strong);
+}
+.cmsbar-login button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.cmsbar-login-error {
+  color: #fca5a5;
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+/* ── Rich-text content defaults ──────────────────────────────────────────────
+   Copied from template/styles/cmsbar.css (sans @layer base, which is a
+   Tailwind-ordering concern this no-Tailwind example does not need). */
+
+.cmsbar-prose h1,
+.cmsbar-prose h2,
+.cmsbar-prose h3,
+.cmsbar-prose h4 {
+  font-weight: var(--cmsbar-prose-heading-weight, 700);
+  margin: 1.2em 0 0.5em;
+}
+.cmsbar-prose h1 {
+  font-size: 2em;
+  line-height: 1.15;
+}
+.cmsbar-prose h2 {
+  font-size: 1.5em;
+  line-height: 1.2;
+}
+.cmsbar-prose h3 {
+  font-size: 1.25em;
+  line-height: 1.3;
+}
+.cmsbar-prose h4 {
+  font-size: 1.1em;
+  line-height: 1.35;
+}
+.cmsbar-prose p {
+  margin: 0 0 0.9em;
+}
+.cmsbar-prose ul,
+.cmsbar-prose ol {
+  padding-left: 1.4em;
+  margin: 0 0 0.9em;
+}
+.cmsbar-prose ul {
+  list-style: disc;
+}
+.cmsbar-prose ol {
+  list-style: decimal;
+}
+.cmsbar-prose li {
+  margin: 0.25em 0;
+}
+.cmsbar-prose a {
+  color: var(--cmsbar-prose-link, var(--cmsbar-info));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.cmsbar-prose strong,
+.cmsbar-prose b {
+  font-weight: 700;
+}
+.cmsbar-prose em,
+.cmsbar-prose i {
+  font-style: italic;
+}
+.cmsbar-prose u {
+  text-decoration: underline;
+}
+.cmsbar-prose > :first-child {
+  margin-top: 0;
+}
+.cmsbar-prose > :last-child {
+  margin-bottom: 0;
+}

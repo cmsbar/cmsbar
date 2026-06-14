@@ -1,9 +1,12 @@
 <script lang="ts">
-  // Read-only render of the CMS content model in Svelte. `data` comes from
-  // +page.server.ts (getContent() on the server), so everything below is in the
-  // server-rendered HTML - proving the framework-neutral content model renders
-  // through a SvelteKit host. No editing UI yet (that is a later phase).
+  // Renders the CMS content model in Svelte. The eyebrow + SEO head come from
+  // +page.server.ts (getContent() on the server). The editable fields render
+  // through <T>, which resolves each path from the CMSBar store: for anonymous
+  // visitors that is the same bundled content, in the SSR HTML and inert; for a
+  // logged-in editor with an active draft the same elements become editable in
+  // place (contenteditable), and typing stages edits the bar can Save.
   import type { PageData } from "./$types";
+  import T from "@/cmsbar/T.svelte";
 
   let { data }: { data: PageData } = $props();
 </script>
@@ -26,6 +29,6 @@
 
 <main>
   <p class="eyebrow">{data.siteName}</p>
-  <h1 data-cms-path="demo.title">{data.demo?.title}</h1>
-  <p data-cms-path="demo.intro">{data.demo?.intro}</p>
+  <T as="h1" path="demo.title" />
+  <T as="p" path="demo.intro" />
 </main>

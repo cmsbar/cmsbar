@@ -8,8 +8,10 @@
   //   session-check poll; it is called only in onMount, so SSR never touches the
   //   DOM. onDestroy disposes the $effect.root scope start() created.
   //
-  // No editing UI is rendered here - this is the foundation only (S1). The bar
-  // and editable components arrive in later phases and just read the context.
+  // S2 mounts the editor bar (CmsBar) after the page content; it reads the
+  // store from context just like the editable primitives do. The bar renders
+  // its own state machine (login / live / draft / preview) and is inert for
+  // anonymous visitors beyond the login affordance.
 
   import { onMount, onDestroy, untrack } from "svelte";
   import { content } from "@/lib/content";
@@ -18,6 +20,8 @@
     setCmsContext,
     type CmsState,
   } from "@/cmsbar/content.svelte";
+  import CmsBar from "@/cmsbar/CmsBar.svelte";
+  import "@/styles/cmsbar.css";
   import type { LayoutData } from "./$types";
 
   let { data, children }: { data: LayoutData; children: import("svelte").Snippet } =
@@ -40,3 +44,5 @@
 </script>
 
 {@render children()}
+
+<CmsBar />
