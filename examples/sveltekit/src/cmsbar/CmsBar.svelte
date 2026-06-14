@@ -24,6 +24,7 @@
   import { PREVIEW_LS_KEY } from "@/lib/cmsbar/keys";
   import { cmsConfig } from "@/cms.config";
   import { publishingMode } from "@/lib/cmsbar/config";
+  import { pageNameForPath } from "@/lib/cmsbar/pageName";
   import {
     visibleOnPage,
     type ParsedIssue,
@@ -43,17 +44,6 @@
   // Guided tour is opt-in: sites without `tour` config get no button, no overlay.
   const TOUR_ENABLED = (cmsConfig.tour?.steps.length ?? 0) > 0;
 
-  // pageNameForPath equivalent: the neutral helper lives in
-  // template/components/cmsbar (not copied here - see the neutral-core gap in
-  // the PR summary), so the lookup against cmsConfig.pages is inlined.
-  function pageNameForPath(pathname: string): string {
-    const clean = pathname.replace(/\/+$/, "") || "/";
-    const hit = cmsConfig.pages.find((p) => p.path === clean);
-    if (hit) return hit.label;
-    if (clean === "/") return "Home";
-    const first = clean.replace(/^\//, "").split("/")[0] ?? clean;
-    return first.replace(/-/g, " ").replace(/^./, (c) => c.toUpperCase());
-  }
 
   // Reactive current path (matches React's useHost().pathname). Falls back to
   // "/" during SSR before $app/state is populated.
