@@ -8,6 +8,9 @@
     "build": "nuxt build",
     "preview": "nuxt preview",
     "start": "node .output/server/index.mjs",
+    "typecheck": "vue-tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
@@ -18,7 +21,9 @@
   "devDependencies": {
     "@types/bcryptjs": "^2",
     "@types/node": "^22",
+    "jsdom": "^25.0.1",
     "typescript": "^5",
+    "vitest": "^3.2.6",
     "vue-tsc": "^2"
   }
 }
