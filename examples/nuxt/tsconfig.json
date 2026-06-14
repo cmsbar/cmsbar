@@ -1,0 +1,14 @@
+{
+  // Nuxt generates .nuxt/tsconfig.json (with its own "@"/"~" -> rootDir paths)
+  // during `nuxt prepare`. We extend it and add explicit "@/*" -> "./*" so the
+  // copied core's self-imports (@/lib/cmsbar/*) and the project config
+  // (@/cms.config) resolve in the editor and vue-tsc too.
+  "extends": "./.nuxt/tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "~/*": ["./*"]
+    }
+  }
+}

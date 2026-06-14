@@ -1,0 +1,41 @@
+{
+  "site": {
+    "name": "CMSBar Nuxt example",
+    "description": "A site server-rendered by Nuxt 3 with the framework-neutral CMS API mounted as one Nitro catch-all route."
+  },
+  "launch": {
+    "mode": "live"
+  },
+  "favicon": "",
+  "pageMeta": {
+    "home": {
+      "title": "CMSBar runs in this Nuxt host",
+      "description": "A site server-rendered by Nuxt 3, with the framework-neutral CMSBar API mounted as one catch-all Nitro route.",
+      "ogImage": "",
+      "ogTitle": "",
+      "ogDescription": "",
+      "canonical": "",
+      "noindex": false
+    }
+  },
+  "nav": [{ "name": "Home", "href": "/" }],
+  "home": {
+    "hero": {
+      "badge": "Now editable in place",
+      "headline": "Click anything. Change it. Ship it as a PR.",
+      "subtitle": "This text is editable - log in and click it.",
+      "cta": "Get started"
+    }
+  },
+  "demo": {
+    "title": "CMSBar runs in this Nuxt host",
+    "intro": "This heading and paragraph are server-rendered by Nuxt 3 from the framework-neutral content model. pages/index.vue reads getContent() on the server during SSR and renders it - so the content is in the HTML, not assembled by client JS. The whole CMSBar API is mounted at /api/cms/* through a single Nitro catch-all route that forwards the raw web Request to createCmsApi().",
+    "image": "/images/demo.svg",
+    "body": "<h2>Server protocol, no React</h2><p>This block renders <strong>real content</strong> from the model. The editing UI (the in-page bar, the editable primitives) is a later phase; V0 proves the server half: the neutral lib/cmsbar mounts and content server-renders in Vue.</p>",
+    "info": [
+      { "icon": "Clock", "label": "Hours", "value": "Mon–Fri, 9–17h" },
+      { "icon": "MapPin", "label": "Address", "value": "123 Example St" },
+      { "icon": "Mail", "label": "Email", "value": "hello@example.com" }
+    ]
+  }
+}
