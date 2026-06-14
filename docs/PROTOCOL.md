@@ -1,21 +1,23 @@
 # The CMSBar protocol — non-React frameworks (SvelteKit / Nuxt / anything)
 
-> **Status (2026-06-14): the server protocol is real and works today; the
-> Svelte/Vue editing UI is the open "rewrite tier", deliberately not built.**
-> Companion to [FRAMEWORKS.md](./FRAMEWORKS.md). For React hosts (Next, React
-> Router, TanStack Start, Vite, Astro) use the thin adapters + `cmsbar` CLI —
-> this doc is only for hosts whose UI is **not** React.
+> **Status (2026-06-14): the server protocol works today AND a full native
+> Svelte UI now ships** in [`examples/sveltekit`](../examples/sveltekit) — the
+> first non-React client, at feature parity with the React UI. Vue/Nuxt is the
+> same recipe, build on demand. Companion to [FRAMEWORKS.md](./FRAMEWORKS.md).
+> For React hosts (Next, React Router, TanStack Start, Vite, Astro) use the thin
+> adapters + `cmsbar` CLI — this doc is for hosts whose UI is **not** React.
 
-CMSBar is two layers, and only one of them is React:
+CMSBar is two layers, and only one of them was ever React:
 
 1. **The protocol (framework- and language-neutral).** The 18 API routes behind
    one dispatcher, the content model, and the signed-cookie session. This is the
    actual product — Git-as-CMS — and it runs on any JS server.
-2. **The editing UI (React today).** The in-page bar, the editable primitives,
-   the drawers/panels. This is a *client* of the protocol.
+2. **The editing UI (a *client* of the protocol).** The in-page bar, the
+   editable primitives, the drawers/panels. React was the first client;
+   `examples/sveltekit` is now the second, written natively in Svelte 5.
 
-A Svelte or Vue site can adopt layer 1 **now**. Layer 2 is a port, not an
-adapter — see _Scope_.
+A Svelte or Vue site adopts layer 1 in a few lines (below); layer 2 is a port,
+not an adapter — and SvelteKit's proves it's a tractable, finite one (see _Scope_).
 
 ---
 
@@ -60,36 +62,37 @@ page `<head>` the same way React Router's `meta` and Astro's head do.
 So a Svelte/Vue site can today: serve the live content (SSR), and run the full
 edit→Save→PR→preview→approve flow **through the API** — the server half is done.
 
-## 2. What's NOT here — the editing UI (the rewrite tier)
+## 2. The editing UI — SvelteKit done, Vue/Nuxt the same recipe
 
 The in-page editing experience is ~6,500 lines of React under
-`components/cmsbar/`. Porting it is a rewrite per framework, not a shim, because
-the seam that makes the React hosts cheap (`host.tsx`) abstracts *navigation and
-an image component* — it does **not** make React components run in Svelte/Vue.
+`components/cmsbar/`. Porting it is a rewrite per framework, not a shim — the
+seam that makes the React hosts cheap (`host.tsx`) abstracts *navigation and an
+image component*, it does **not** make React components run in Svelte/Vue. But
+the rewrite is **finite and proven**: `examples/sveltekit` is a complete Svelte 5
+port at feature parity. Each React piece has a native Svelte counterpart:
 
-A Svelte (and separately, a Vue) client must reimplement, natively:
-
-| React component(s) | What the port must rebuild |
+| React component(s) | Svelte port (`examples/sveltekit/src/cmsbar/`) |
 | --- | --- |
-| `ContentProvider` | a store/composable: overrides, pending edits/uploads/deletes, blob previews, localStorage + IndexedDB staging, preview mode |
-| `T`, `RichText` | inline `contentEditable` editing + the Selection-API rich-text toolbar |
-| `EditableImage`, `EditableMedia`, `FocalPoint` | media picker/upload/library, focal-point drag, embed normalization |
-| `EditableInfoList` | the block-repeater with drag-to-reorder |
-| `CmsBar`, `SettingsDrawer`, `VersionsDialog`, `IssuesPanel`/`Button`, `PageMetaDrawer`, `CmsTour`, `Portal` | the bar, drawers, panels, guided tour |
+| `ContentProvider` | `content.svelte.ts` — a $state store/context: overrides, pending edits/uploads/deletes, blob previews, localStorage + IndexedDB staging, preview mode |
+| `T`, `RichText` | `T.svelte`, `RichText.svelte` + `RichTextToolbar.svelte` — contentEditable + the Selection-API toolbar |
+| `EditableImage`, `EditableMedia`, `FocalPoint` | `EditableImage.svelte`, `EditableMedia.svelte`, `MediaBrowser.svelte`, `MediaPicker.svelte`, `FocalPoint.svelte` |
+| `EditableInfoList` | `EditableInfoList.svelte` — block-repeater + drag-reorder |
+| `CmsBar`, `SettingsDrawer`, `VersionsDialog`, `IssuesPanel`/`Button`, `PageMetaDrawer`, `CmsTour` | `CmsBar.svelte`, `SettingsDrawer.svelte`, `VersionsDialog.svelte`, `IssuesPanel.svelte`, `PageMetaDrawer.svelte`, `CmsTour.svelte` (+ a `portal` action + inline-SVG `Icon`) |
 
-Estimate: **XL per framework** (~the component-layer line count, each), with
-permanent sync debt against the React UI.
+It reuses the neutral `lib/cmsbar` (handlers, dispatcher, session, paths, media
+rules, GitHub backend) unchanged. **A Vue/Nuxt UI is the identical recipe** —
+the same neutral core + the same ~16 components rewritten in Vue. Effort: **XL
+per framework**, with sync debt against the React + Svelte UIs.
 
 ## 3. Recommendation
 
-- **Now:** if a Svelte/Vue team wants CMSBar, give them the protocol — mount
-  `createCmsApi`, render content from `getContent()`. They get versioned,
-  PR-reviewed content immediately; editing happens via the API (e.g. a small
-  custom form, or a shared React editor mounted on an `/admin` route).
-- **Build the native Svelte/Vue editing UI only when demand is proven.** It is a
-  dedicated, ongoing client — ideally owned by people who live in that
-  ecosystem — published against this protocol as the contract. This matches
-  PLAN.md §6 and FRAMEWORKS.md's "not until demand proves it."
+- **SvelteKit: use the native UI now** — `examples/sveltekit` is the runnable
+  starting point (mount `createCmsApi`, copy the Svelte `cmsbar` components,
+  wire the layout). Build + svelte-check green; the edit loop is browser-verified.
+- **Vue/Nuxt:** the protocol works today (mount `createCmsApi`, render via
+  `getContent()`); the native Vue editing UI is the same proven recipe — build it
+  when demand warrants a second non-React client, ideally owned by people who
+  live in that ecosystem, published against this protocol as the contract.
 
-The protocol is the stable thing. The React UI is the first client; a Svelte or
-Vue UI would be the second — and this document is the contract it builds against.
+The protocol is the stable thing. React was the first UI client, Svelte is the
+second, and this document is the contract any third (Vue) builds against.

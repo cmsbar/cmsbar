@@ -1,13 +1,15 @@
 # Framework support - dependency audit & adapter proposal
 
-> **Status (2026-06-14): shipped (Tier 1 + Astro).** The host seam is
-> implemented and frozen (validated on all five hosts), the Phase 0 integration
-> harness exists (handler-level tests, 152 green), and live example hosts build
-> + run green for **Next, React Router 7, TanStack Start, the Vite SPA, and
-> Astro** (`examples/`). The `cmsbar` CLI ships both modes
+> **Status (2026-06-14): shipped (Tier 1 + Astro + a native SvelteKit UI).** The
+> host seam is implemented and frozen (validated on all five React hosts), the
+> Phase 0 integration harness exists (handler-level tests, 156 green), and live
+> example hosts build + run green for **Next, React Router 7, TanStack Start, the
+> Vite SPA, and Astro** (`examples/`). The `cmsbar` CLI ships both modes
 > (`cmsbar new <dir> --framework <fw>` / `cmsbar init`) for all five
-> (`packages/cli`). Remaining: the SvelteKit/Nuxt rewrite tier (roadmap) and
-> the Next Pages Router community adapter. Companion to _Framework support_ in
+> (`packages/cli`). Beyond React, **`examples/sveltekit` is a complete native
+> Svelte 5 UI** (the first non-React client, at feature parity — see
+> [PROTOCOL.md](./PROTOCOL.md)). Remaining: a Vue/Nuxt UI (the same recipe, on
+> demand) and the Next Pages Router community adapter. Companion to _Framework support_ in
 > [PLAN.md](./PLAN.md) §6, which fixed the architecture: **one monorepo, a
 > neutral core + per-framework adapters** over a small host interface - not a
 > repo per framework. This doc audits the Next.js coupling file by file, specs
@@ -279,24 +281,26 @@ handlers; middleware works as-is; `initialCms` needs `getServerSideProps` /
 audience is legacy and shrinking - don't spend core-team time. Publish the
 seam, **accept/curate a community adapter**.
 
-#### SvelteKit / Nuxt - a different product, not an adapter
+#### SvelteKit — native UI SHIPPED; Nuxt/Vue — same recipe, on demand
 
-The seam doesn't help here: the ~6,000 neutral lines are neutral **React**. A
-Svelte/Vue port keeps `lib/` (~1,400 lines: paths, session, media rules,
-GitHub backend) and the neutral server handlers, and **rewrites the entire
-component layer** - provider, primitives, bar, drawers, panels. That is a
-rewrite of most of the product per framework, with permanent sync debt. If
-demand materializes, the honest shape is "CMSBar protocol": the neutral
-handlers + content model are the product, and the Svelte UI is a new client
-maintained by people who live there. **Effort: XL each. Not before the React
-adapters have adoption.**
+The seam doesn't carry the React component layer to Svelte/Vue: the ~6,000
+neutral lines are neutral **React**, so a non-React UI keeps `lib/` (paths,
+session, media rules, GitHub backend) + the neutral server handlers and
+**rewrites the component layer** (provider, primitives, bar, drawers, panels).
+That rewrite is real, but it is **finite and now proven**:
+[`examples/sveltekit`](../examples/sveltekit) is a complete Svelte 5 port — the
+first non-React client, at feature parity (store, `T`, RichText + toolbar,
+media + browser, InfoList, all drawers/panels) reusing the neutral `lib/`
+unchanged. Build + svelte-check green; the edit loop is browser-verified.
 
-> **The protocol is specced and the server half works today** — see
-> [PROTOCOL.md](./PROTOCOL.md): mounting `createCmsApi` on SvelteKit
-> (`+server.ts`) / Nuxt (Nitro server route) is a few lines and is proven by the
-> same dispatcher the five React hosts use. What's deferred is only the native
-> Svelte/Vue **editing UI** (the ~6,500-line component layer), which is a rewrite
-> per framework — build it when demand proves it, not for a hypothetical user.
+**Nuxt / Vue** is the identical recipe — the same neutral core + the same ~16
+components rewritten in Vue. **Effort: XL** (component-layer rewrite), with sync
+debt against the React + Svelte UIs; build when demand warrants a third UI.
+
+> See [PROTOCOL.md](./PROTOCOL.md): any non-React host mounts the whole API by
+> calling `createCmsApi` (SvelteKit `+server.ts` / Nuxt Nitro route) — the same
+> dispatcher the five React hosts use — and renders content via `getContent()`.
+> The Svelte UI is the worked example of the full editing client; Vue follows it.
 
 ### Summary
 
@@ -308,7 +312,8 @@ adapters have adoption.**
 | Vite SPA + `@cms/server` | boot-time session, Hono/Express companion mount          | same (client side)                          | M      | **shipped** — `examples/vite-spa` (no SSR caveats) |
 | Astro                  | endpoint mount + editor-gated island hydration             | lib/, handlers; primitives need integration | L      | **shipped** — `examples/astro` (editor-gated) |
 | Next Pages Router      | router shim, (req,res) wrapper, GSSP session               | almost everything                           | S      | community adapter (seam published)      |
-| SvelteKit / Nuxt       | full UI rewrite over shared lib/ + handlers                | lib/ + server handlers only (~20%)          | XL     | roadmap — not until demand proves it    |
+| SvelteKit              | full UI rewrite over shared lib/ + handlers                | lib/ + neutral handlers                      | XL     | **shipped** — `examples/sveltekit` (native Svelte 5 UI, first non-React) |
+| Nuxt / Vue             | full UI rewrite over shared lib/ + handlers                | lib/ + neutral handlers                      | XL     | same recipe as SvelteKit — on demand    |
 
 ---
 
@@ -369,6 +374,9 @@ adapters have adoption.**
 - Shipped in this order: **Next (reference) → React Router 7 → TanStack Start
   → Vite SPA via `@cms/server` (Hono mount) → Astro (editor-gated).** All five
   have a live example in `examples/`; the `cmsbar` CLI scaffolds and adds them
-  (`packages/cli`). Pages Router: community adapter. SvelteKit/Nuxt: rewrite
-  tier, roadmap.
-- One monorepo, one core. **Adapters are thin, or they are wrong.**
+  (`packages/cli`). Pages Router: community adapter.
+- Beyond React: **`examples/sveltekit` is a full native Svelte 5 UI** — the
+  first non-React client at feature parity, proving the rewrite tier is finite
+  (see PROTOCOL.md). Vue/Nuxt is the same recipe, build on demand.
+- One monorepo, one core. **Adapters are thin (React) or a proven finite rewrite
+  (non-React) — never a fork.**
