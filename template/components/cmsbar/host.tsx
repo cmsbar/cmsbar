@@ -37,6 +37,9 @@ export interface CmsImageProps {
   onError?: (e: unknown) => void;
 }
 
+// STABLE CONTRACT (frozen 2026-06-14, validated by @cms/next + the React Router
+// host). Adapters implement this; changing it is a breaking change. Add optional
+// fields rather than altering existing ones.
 export interface CmsClientHost {
   /** Current path, reactive. */
   pathname: string;

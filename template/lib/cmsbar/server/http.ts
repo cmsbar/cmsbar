@@ -8,6 +8,8 @@
 
 import { SESSION_COOKIE } from "@/lib/cmsbar/session";
 
+// STABLE CONTRACT (frozen 2026-06-14, validated by @cms/next + the React Router
+// host). The server-side half of the host seam; changing it is breaking.
 export interface CmsRequestContext {
   /** Read a request cookie by name (returns the decoded value, or undefined). */
   cookies: { get(name: string): string | undefined };
