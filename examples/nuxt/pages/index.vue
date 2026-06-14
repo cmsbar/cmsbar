@@ -6,17 +6,19 @@
 // draft the same elements become editable in place (contenteditable), and
 // typing stages edits the bar can Save.
 //
-// V2 wired text editing (demo.title + demo.intro through <T>). V3 adds the media
-// primitives: <EditableImage path="demo.image" fill/> (object-cover, draggable
-// focal point) and <EditableMedia path="demo.media"/> (image / video / embed in
-// one slot). The rich-text body and the info list are still read-only here
-// (their editable primitives - RichText, EditableInfoList - arrive in later Vue
-// phases).
+// V2 wired text editing (demo.title + demo.intro through <T>). V3 added the media
+// primitives (<EditableImage>, <EditableMedia>). V4 adds the last two editable
+// primitives: <RichText> (block-level contenteditable with a floating selection
+// toolbar) for demo.body, and <EditableInfoList> (repeatable icon + label + value
+// block with add/remove, drag-reorder, inline edit and an icon picker) for
+// demo.info. Every field on this page is now editable in place.
 import { getContent } from "@/lib/content";
 import { resolvePageMeta, EMPTY_PAGE_META } from "@/lib/cmsbar/page-meta-core";
 import T from "@/cmsbar/T.vue";
 import EditableImage from "@/cmsbar/EditableImage.vue";
 import EditableMedia from "@/cmsbar/EditableMedia.vue";
+import RichText from "@/cmsbar/RichText.vue";
+import EditableInfoList from "@/cmsbar/EditableInfoList.vue";
 
 const content = getContent();
 
@@ -26,7 +28,6 @@ const meta = resolvePageMeta(entry, {
   description: "A site server-rendered by Nuxt 3 with CMSBar mounted.",
 });
 
-const demo = content.demo;
 const siteName = content.site?.name ?? "";
 
 useHead({
@@ -62,13 +63,21 @@ useHead({
       <EditableMedia path="demo.media" />
     </div>
 
-    <!-- eslint-disable-next-line vue/no-v-html -->
-    <div class="body" data-cms-path="demo.body" v-html="demo?.body"></div>
-    <ul class="info">
-      <li v-for="item in demo?.info ?? []" :key="item.label">
-        <strong>{{ item.label }}:</strong> {{ item.value }}
-      </li>
-    </ul>
+    <!-- RichText: a block-level (div) editor. View mode renders saved HTML via
+         .cmsbar-prose; edit mode becomes contenteditable with the floating
+         selection toolbar (headings, lists, link, bold/italic/underline). -->
+    <section class="demo-body">
+      <RichText as="div" path="demo.body" />
+    </section>
+
+    <!-- EditableInfoList: a repeatable icon + label + value block. Editors can
+         add/remove items, drag to reorder, edit each field inline, and pick an
+         icon from the curated set. -->
+    <section class="demo-info">
+      <h2 class="demo-info-title">Informacije</h2>
+      <EditableInfoList path="demo.info" />
+    </section>
+
     <p class="note">
       The CMSBar API is mounted at
       <code>/api/cms/*</code> -
@@ -119,13 +128,15 @@ h1 {
   overflow: hidden;
   background: #0f172a;
 }
-.body h2 {
-  font-size: 1.25rem;
-  margin-top: 2rem;
+.demo-body {
+  margin: 2.5rem 0 0;
 }
-.info {
-  margin-top: 2rem;
-  padding-left: 1rem;
+.demo-info {
+  margin: 2.5rem 0 0;
+}
+.demo-info-title {
+  font-size: 1.25rem;
+  margin: 0 0 1.25rem;
 }
 .note {
   margin-top: 2.5rem;
