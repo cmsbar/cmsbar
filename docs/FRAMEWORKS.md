@@ -1,11 +1,13 @@
 # Framework support - dependency audit & adapter proposal
 
-> **Status (2026-06-14): building.** The host seam is implemented and frozen
-> (validated on Next + React Router + TanStack Start + a Vite SPA), the Phase 0
-> integration harness exists (handler-level tests, 152 green), and live example
-> hosts build + run green for **Next, React Router 7, TanStack Start, and the
-> Vite SPA** (`examples/`). Remaining: Astro, the `create-cmsbar` scaffolder,
-> and the SvelteKit/Nuxt rewrite tier. Companion to _Framework support_ in
+> **Status (2026-06-14): shipped (Tier 1 + Astro).** The host seam is
+> implemented and frozen (validated on all five hosts), the Phase 0 integration
+> harness exists (handler-level tests, 152 green), and live example hosts build
+> + run green for **Next, React Router 7, TanStack Start, the Vite SPA, and
+> Astro** (`examples/`). The `cmsbar` CLI ships both modes
+> (`cmsbar new <dir> --framework <fw>` / `cmsbar init`) for all five
+> (`packages/cli`). Remaining: the SvelteKit/Nuxt rewrite tier (roadmap) and
+> the Next Pages Router community adapter. Companion to _Framework support_ in
 > [PLAN.md](./PLAN.md) §6, which fixed the architecture: **one monorepo, a
 > neutral core + per-framework adapters** over a small host interface - not a
 > repo per framework. This doc audits the Next.js coupling file by file, specs
@@ -124,9 +126,11 @@ non-RSC hosts everything is client: `initialCms` comes from the root
 loader (React Router / Start) or, in a pure SPA, from a `GET /api/cms/session`
 fetch on boot. The core never needs to know which - it just receives the prop.
 
-PLAN.md's caveat stands and is repeated here on purpose: **do not freeze or
-publish this interface from n=1.** It becomes a public contract only after the
-second host (React Router) proves it.
+PLAN.md's original caveat (kept here for the record): **do not freeze or publish
+this interface from n=1** - it becomes a public contract only after the second
+host proves it. **Resolved:** React Router validated it, TanStack Start
+confirmed it held, and the Vite SPA + Astro exercised it without a core patch -
+the seam is now frozen across all five hosts.
 
 ### Prerequisite core refactors (framework-neutral, pay off even if no adapter ever ships)
 
@@ -147,9 +151,14 @@ second host (React Router) proves it.
 
 ## 3. Target frameworks
 
-### Tier 1 - build these, in this order
+### Tier 1 - shipped (built in this order)
 
-#### React Router 7 (framework mode, formerly Remix) - the seam validator
+#### React Router 7 (framework mode, formerly Remix) - the seam validator — SHIPPED
+
+Built and proven end-to-end in **`examples/react-router`** (the whole API mounts
+as one resource route → `handleCmsRequest`; root-loader session; nav via
+`useLocation`/`useNavigate`; route `meta` from `resolvePageMeta()`). This host
+validated and froze the seam.
 
 | Seam            | Implementation                                                                                                  |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------- |
@@ -167,7 +176,13 @@ second host (React Router) proves it.
   Request/Response are the strictest test of the handler seam without RSC
   noise, and it is the largest non-Next React community.
 
-#### TanStack Start
+#### TanStack Start — SHIPPED
+
+Built and proven end-to-end in **`examples/tanstack-start`** (the whole API
+mounts as one splat server route → `handleCmsRequest`; root-loader session; page
+meta via route `head()`). Mirrors the React Router example one-for-one and
+confirmed the frozen seam held. Note: its Vite 7 toolchain needs a modern Node
+(20.19+ / 22.12+).
 
 | Seam            | Implementation                                                                                       |
 | ---------------- | ------------------------------------------------------------------------------------------------------ |
@@ -230,24 +245,30 @@ a Hono companion on one origin):
   Phase 9 gateway story and is directly reusable by Astro - it earns its cost
   twice.
 
-### Tier 2 - proposed, build on demand
+### Tier 2 - Astro shipped; the rest build on demand
 
-#### Astro (React islands) - strong fit, hard economics
+#### Astro (React islands) - strong fit, hard economics — SHIPPED
 
-The server seam is the easy part: Astro endpoints are `Request → Response`, so
-the companion handlers mount in an afternoon. The hard part is the client:
-**every editable node is a hydrated React island.** Wrapping all site copy in
-`<T client:load>` defeats Astro's zero-JS pitch for the public visitor. The
-honest options:
+Built and proven end-to-end in **`examples/astro`**, with the design decision
+resolved in favor of option (a), **editor-gated hydration**. The server seam was
+the easy part: Astro endpoints are `Request → Response`, so the whole API mounts
+as one catch-all endpoint —
+`export const ALL = ({ request }) => createCmsApi()(request)`. The hard part was
+the client: **every editable node would otherwise be a hydrated React island**,
+and wrapping all site copy in `<T client:load>` defeats Astro's zero-JS pitch.
+The shipped answer:
 
-- (a) **editor-gated hydration** - public visitors get static HTML, a detected
-  editor cookie switches the page to hydrated primitives. Needs a small Astro
-  integration and real design work; this is the version worth shipping.
-- (b) always hydrate - works today, wrong default for the audience.
+- (a) **editor-gated hydration (shipped)** - the content region is authored once
+  as a React component; `index.astro` reads the editor session cookie
+  server-side and applies `client:load` **only when an editor is present**.
+  Public visitors and crawlers get fully server-rendered static HTML with zero
+  CMS JS (SEO-equivalent to a static page, not a SPA); the hydrated island is
+  served only to a logged-in editor. No double-authoring, no per-node islands.
+- (b) always hydrate - works too, wrong default for the audience; not used.
 
 **Verdict:** conceptually the best non-Next audience for a Git-as-CMS content
-product; do a design spike _after_ Tier 1. **Effort: L** - not because of the
-seam, because of island-gating UX.
+product, now shipped. **Effort was L** - not because of the seam, because of the
+island-gating UX, which `examples/astro` resolves.
 
 #### Next.js Pages Router - cheap, low value
 
@@ -272,14 +293,15 @@ adapters have adoption.**
 
 ### Summary
 
-| Framework             | Adapter implements                                        | Stays 100% shared                          | Effort | When                          |
-| ---------------------- | ---------------------------------------------------------- | ------------------------------------------- | ------ | ------------------------------ |
-| React Router 7         | resource-route mount, root-loader session, nav hooks, meta | lib/, all components, CSS, content model    | M      | first - validates the seam     |
-| TanStack Start         | server-route mount, root-loader session, nav hooks, head() | same                                        | S-M    | second - confirms the seam     |
-| Vite SPA + `@cms/server` | boot-time session, Hono/Express companion mount          | same (client side)                          | M      | third - unlocks SPA + Astro    |
-| Astro                  | endpoint mount + editor-gated island hydration             | lib/, handlers; primitives need integration | L      | design spike after Tier 1      |
-| Next Pages Router      | router shim, (req,res) wrapper, GSSP session               | almost everything                           | S      | community adapter              |
-| SvelteKit / Nuxt       | full UI rewrite over shared lib/ + handlers                | lib/ + server handlers only (~20%)          | XL     | not until demand proves it     |
+| Framework             | Adapter implements                                        | Stays 100% shared                          | Effort | Status                                 |
+| ---------------------- | ---------------------------------------------------------- | ------------------------------------------- | ------ | --------------------------------------- |
+| Next.js (App Router)   | route handlers, login page, RSC layout wiring              | lib/, all components, CSS, content model    | —      | **shipped** — `examples/next` (reference) |
+| React Router 7         | resource-route mount, root-loader session, nav hooks, meta | lib/, all components, CSS, content model    | M      | **shipped** — `examples/react-router` (froze the seam) |
+| TanStack Start         | server-route mount, root-loader session, nav hooks, head() | same                                        | S-M    | **shipped** — `examples/tanstack-start` (Node 20.19+/22.12+) |
+| Vite SPA + `@cms/server` | boot-time session, Hono/Express companion mount          | same (client side)                          | M      | **shipped** — `examples/vite-spa` (no SSR caveats) |
+| Astro                  | endpoint mount + editor-gated island hydration             | lib/, handlers; primitives need integration | L      | **shipped** — `examples/astro` (editor-gated) |
+| Next Pages Router      | router shim, (req,res) wrapper, GSSP session               | almost everything                           | S      | community adapter (seam published)      |
+| SvelteKit / Nuxt       | full UI rewrite over shared lib/ + handlers                | lib/ + server handlers only (~20%)          | XL     | roadmap — not until demand proves it    |
 
 ---
 
@@ -305,8 +327,11 @@ adapters have adoption.**
    public contract only after this ships green.
 5. **`@cms/start`** - cheap second confirmation.
 6. **`@cms/server` + the Vite SPA guide** - unlocks SPAs, seeds Astro and the
-   Phase 9 gateway.
-7. **Astro design spike** - go/no-go on editor-gated hydration.
+   Phase 9 gateway. _Shipped: `examples/vite-spa`._
+7. **Astro design spike** - go/no-go on editor-gated hydration. _Shipped:
+   editor-gated hydration chosen, `examples/astro`._
+8. **`cmsbar` CLI** - both modes (`cmsbar new <dir> --framework <fw>` /
+   `cmsbar init`) across all five hosts. _Shipped: `packages/cli`._
 
 ### What NOT to do
 
@@ -334,7 +359,9 @@ adapters have adoption.**
   page-meta, layout wiring).
 - Do the **neutral-handler refactor + integration harness as one motion** - it
   is the same work Phase 3 needs and it pays off even if no adapter ever ships.
-- Order: **React Router 7 → TanStack Start → Vite SPA via `@cms/server`
-  (Hono/Express mount) → Astro spike.** Pages Router: community adapter.
-  SvelteKit/Nuxt: rewrite tier, not now.
+- Shipped in this order: **Next (reference) → React Router 7 → TanStack Start
+  → Vite SPA via `@cms/server` (Hono mount) → Astro (editor-gated).** All five
+  have a live example in `examples/`; the `cmsbar` CLI scaffolds and adds them
+  (`packages/cli`). Pages Router: community adapter. SvelteKit/Nuxt: rewrite
+  tier, roadmap.
 - One monorepo, one core. **Adapters are thin, or they are wrong.**
