@@ -168,18 +168,44 @@ export class CmsStore {
   #blobOverrides = $state<Record<string, string>>({});
   #cms = $state<CmsState>({ authenticated: false });
 
+  // Approval state lives in its own $state fields, NOT inside #cms. The 30s
+  // poll's check() writes ONLY these (no #cms reassignment), so the poll and
+  // restore effects - which trigger off #cms.draft - never re-run on the poll's
+  // own response. This mirrors the React original, whose poll is keyed to
+  // [cms.draft]: there setCmsState preserves the cms.draft reference, so the
+  // approval write never re-fires the effect. Svelte's coarse $state means a
+  // whole-object #cms reassignment WOULD re-trigger, so we keep them separate.
+  #draftApproved = $state<boolean | undefined>(undefined);
+  #approvedLabelName = $state<string | undefined>(undefined);
+
+  // The active draft's branch, as a derived primitive. A $derived recomputes on
+  // every #cms reassignment but only changes value - and so only re-triggers a
+  // dependent effect - when the branch string actually differs. The poll and
+  // restore effects read THIS (not #cms.draft directly), matching React's
+  // [cms.draft] / [draftBranch] deps so they fire only on a real branch change.
+  #draftBranch = $derived(this.#cms.draft?.branch);
+
   // Live blob: URLs we created and must revoke (not reactive - bookkeeping).
   #blobRefs = new Set<string>();
 
   constructor(content: SiteContent, initialCms: CmsState) {
     this.bundled = content;
-    this.#cms = initialCms;
+    const { draftApproved, approvedLabelName, ...rest } = initialCms;
+    this.#cms = rest;
+    this.#draftApproved = draftApproved;
+    this.#approvedLabelName = approvedLabelName;
   }
 
   // ── Reads ──────────────────────────────────────────────────────────────
 
+  // Re-expose the full CmsState shape (incl. the approval fields held in their
+  // own $state) so consumers see the same object the React provider published.
   get cms(): CmsState {
-    return this.#cms;
+    return {
+      ...this.#cms,
+      draftApproved: this.#draftApproved,
+      approvedLabelName: this.#approvedLabelName,
+    };
   }
 
   get pendingUploads(): PendingUpload[] {
@@ -217,7 +243,7 @@ export class CmsStore {
     return (
       !!this.#cms.draft &&
       !this.#cms.preview &&
-      (DIRECT || !this.#cms.draftApproved)
+      (DIRECT || !this.#draftApproved)
     );
   }
 
@@ -245,7 +271,12 @@ export class CmsStore {
   // path that touches persisted state - the mutating actions call this
   // synchronously, and the restore/poll effect re-runs it on reactive change.
   #persist(): void {
-    const draftBranch = this.#cms.draft?.branch;
+    // Read the derived branch (not this.#cms.draft?.branch): when #persist runs
+    // inside #installPersistEffect, this keeps the effect's only #cms-derived
+    // dependency the branch primitive, so an unrelated #cms reassignment does
+    // not re-run persist. Called synchronously from actions it just reads the
+    // current derived value.
+    const draftBranch = this.#draftBranch;
     // In direct mode the draft branch is always the base branch, so this
     // localStorage key is shared by every future session on this device.
     // Persist only overrides that are still pending: committed values already
@@ -497,8 +528,12 @@ export class CmsStore {
   // refocus. Skipped entirely in direct mode - there is no PR to poll.
   #installPollEffect(): void {
     $effect(() => {
-      const draft = this.#cms.draft;
-      if (!draft || DIRECT) return;
+      // Trigger off the derived branch primitive (recomputes on every #cms
+      // reassign but only changes when the branch string differs), so check()'s
+      // writes to #draftApproved / #approvedLabelName never re-arm this effect.
+      // This matches React's [cms.draft] dep, which check() leaves untouched.
+      const branch = this.#draftBranch;
+      if (!branch || DIRECT) return;
       let cancelled = false;
       const POLL_MS = 30_000;
       let timer: ReturnType<typeof setTimeout> | null = null;
@@ -511,11 +546,10 @@ export class CmsStore {
             draft?: { approved?: boolean; approvedLabel?: string } | null;
           };
           if (cancelled) return;
-          this.#cms = {
-            ...this.#cms,
-            draftApproved: !!data.draft?.approved,
-            approvedLabelName: data.draft?.approvedLabel,
-          };
+          // Write the approval fields directly - NOT via a #cms reassignment -
+          // so this response does not re-trigger the poll or restore effects.
+          this.#draftApproved = !!data.draft?.approved;
+          this.#approvedLabelName = data.draft?.approvedLabel;
         } catch {
           /* swallow - non-fatal */
         }
@@ -556,7 +590,13 @@ export class CmsStore {
   // Restore on draft change.
   #installRestoreEffect(): void {
     $effect(() => {
-      const draftBranch = this.#cms.draft?.branch;
+      // Depend ONLY on the derived branch primitive, matching React's
+      // [draftBranch] dep. Reading this.#cms.draft?.branch here would subscribe
+      // to the whole #cms object signal, so every #cms reassignment (poll,
+      // setPreview, applyCommitted, setDraft) would re-run this effect and wipe
+      // blob previews + pending uploads. The $derived only changes - and so only
+      // re-fires this effect - on a real branch transition.
+      const draftBranch = this.#draftBranch;
 
       // Reset transient state.
       for (const url of this.#blobRefs) URL.revokeObjectURL(url);
@@ -622,7 +662,11 @@ export class CmsStore {
   #installPersistEffect(): void {
     $effect(() => {
       // Touch every reactive dependency so the effect re-runs on any change.
-      void this.#cms.draft?.branch;
+      // Use the derived branch primitive (not this.#cms.draft?.branch) so an
+      // unrelated #cms reassignment - e.g. a poll/preview update - does not
+      // pointlessly re-persist; persist still re-runs on a real branch change
+      // and on any pending-state change below.
+      void this.#draftBranch;
       void this.#overrides;
       void this.#pendingEditPaths;
       void this.#pendingFolders;

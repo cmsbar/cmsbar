@@ -16,6 +16,16 @@
   // textContent here. The caret-preservation rule is reproduced faithfully:
   // the value->DOM sync writes textContent ONLY when the element is not focused,
   // so re-renders mid-edit never collapse the user's caret to position 0.
+  //
+  // CRITICAL: in edit mode the contenteditable is rendered with an EMPTY body -
+  // it must NOT contain a reactive {value} text child. Svelte compiles a plain
+  // {value} child into an unguarded set_text template effect that rewrites the
+  // text node on every keystroke (addEdit -> value changes), collapsing the
+  // caret to position 0 and making typing impossible. Instead the focus-guarded
+  // $effect below is the SOLE writer of the editable text: it seeds textContent
+  // when edit mode mounts and resyncs only while the node is unfocused, exactly
+  // as React's T writes innerHTML only when document.activeElement !== ref.
+  // View mode keeps the reactive {value} child (no caret to clobber).
 
   import { getCmsContext } from "@/cmsbar/content.svelte";
   import { cmsConfig } from "@/cms.config";
@@ -95,7 +105,7 @@
     tabindex="0"
     oninput={onInput}
     onkeydown={onKeydown}
-  >{value}</svelte:element>
+  ></svelte:element>
 {:else}
   <svelte:element
     this={as}
