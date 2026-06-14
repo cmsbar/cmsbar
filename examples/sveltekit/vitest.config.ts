@@ -20,6 +20,10 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
-    include: ["src/**/*.{test,spec}.{js,ts}"],
+    // The `.test.svelte.ts` pattern is for rune-using tests ($effect.root,
+    // $derived): vite-plugin-svelte only compiles runes in files ending
+    // `.svelte.[jt]s`, and that suffix lets effect-lifecycle tests mount the
+    // store's $effects. Plain `.test.ts` files stay pure (no rune scheduling).
+    include: ["src/**/*.{test,spec}.{js,ts}", "src/**/*.test.svelte.ts"],
   },
 });
