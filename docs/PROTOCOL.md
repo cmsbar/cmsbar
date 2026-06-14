@@ -1,9 +1,9 @@
 # The CMSBar protocol — non-React frameworks (SvelteKit / Nuxt / anything)
 
-> **Status (2026-06-14): the server protocol works today AND a full native
-> Svelte UI now ships** in [`examples/sveltekit`](../examples/sveltekit) — the
-> first non-React client, at feature parity with the React UI. Vue/Nuxt is the
-> same recipe, build on demand. Companion to [FRAMEWORKS.md](./FRAMEWORKS.md).
+> **Status (2026-06-14): the server protocol works today AND two full native
+> non-React UIs now ship** — Svelte 5 in [`examples/sveltekit`](../examples/sveltekit)
+> and Vue 3 in [`examples/nuxt`](../examples/nuxt), both at feature parity with
+> the React UI and browser-verified. Companion to [FRAMEWORKS.md](./FRAMEWORKS.md).
 > For React hosts (Next, React Router, TanStack Start, Vite, Astro) use the thin
 > adapters + `cmsbar` CLI — this doc is for hosts whose UI is **not** React.
 
@@ -14,10 +14,12 @@ CMSBar is two layers, and only one of them was ever React:
    actual product — Git-as-CMS — and it runs on any JS server.
 2. **The editing UI (a *client* of the protocol).** The in-page bar, the
    editable primitives, the drawers/panels. React was the first client;
-   `examples/sveltekit` is now the second, written natively in Svelte 5.
+   `examples/sveltekit` (Svelte 5) and `examples/nuxt` (Vue 3) are the second and
+   third, written natively in their frameworks.
 
 A Svelte or Vue site adopts layer 1 in a few lines (below); layer 2 is a port,
-not an adapter — and SvelteKit's proves it's a tractable, finite one (see _Scope_).
+not an adapter — and both SvelteKit's and Nuxt's prove it's a tractable, finite
+one (see _Scope_).
 
 ---
 
@@ -62,14 +64,21 @@ page `<head>` the same way React Router's `meta` and Astro's head do.
 So a Svelte/Vue site can today: serve the live content (SSR), and run the full
 edit→Save→PR→preview→approve flow **through the API** — the server half is done.
 
-## 2. The editing UI — SvelteKit done, Vue/Nuxt the same recipe
+## 2. The editing UI — SvelteKit AND Nuxt/Vue both done
 
 The in-page editing experience is ~6,500 lines of React under
 `components/cmsbar/`. Porting it is a rewrite per framework, not a shim — the
 seam that makes the React hosts cheap (`host.tsx`) abstracts *navigation and an
 image component*, it does **not** make React components run in Svelte/Vue. But
-the rewrite is **finite and proven**: `examples/sveltekit` is a complete Svelte 5
-port at feature parity. Each React piece has a native Svelte counterpart:
+the rewrite is **finite and proven twice**: `examples/sveltekit` is a complete
+Svelte 5 port and `examples/nuxt` a complete Vue 3 port, both at feature parity.
+Each React piece has a native counterpart in each:
+
+The Vue port (`examples/nuxt/cmsbar/*.vue`) mirrors the Svelte filenames 1:1
+(`content.ts` store via provide/inject, `T.vue`, `RichText.vue` +
+`RichTextToolbar.vue`, the media set, `EditableInfoList.vue`, `CmsBar.vue` + the
+five drawers/panels, an inline-SVG `Icon.vue`); React Portal → Vue `<Teleport>`,
+Svelte attachments → a focus-guarded `v-inline` directive.
 
 | React component(s) | Svelte port (`examples/sveltekit/src/cmsbar/`) |
 | --- | --- |
@@ -79,20 +88,21 @@ port at feature parity. Each React piece has a native Svelte counterpart:
 | `EditableInfoList` | `EditableInfoList.svelte` — block-repeater + drag-reorder |
 | `CmsBar`, `SettingsDrawer`, `VersionsDialog`, `IssuesPanel`/`Button`, `PageMetaDrawer`, `CmsTour` | `CmsBar.svelte`, `SettingsDrawer.svelte`, `VersionsDialog.svelte`, `IssuesPanel.svelte`, `PageMetaDrawer.svelte`, `CmsTour.svelte` (+ a `portal` action + inline-SVG `Icon`) |
 
-It reuses the neutral `lib/cmsbar` (handlers, dispatcher, session, paths, media
-rules, GitHub backend) unchanged. **A Vue/Nuxt UI is the identical recipe** —
-the same neutral core + the same ~16 components rewritten in Vue. Effort: **XL
-per framework**, with sync debt against the React + Svelte UIs.
+Both ports reuse the neutral `lib/cmsbar` (handlers, dispatcher, session, paths,
+media rules, GitHub backend) unchanged — zero core fork. Effort was **XL per
+framework**; the remaining cost is sync debt keeping the three UIs aligned.
 
 ## 3. Recommendation
 
 - **SvelteKit: use the native UI now** — `examples/sveltekit` is the runnable
   starting point (mount `createCmsApi`, copy the Svelte `cmsbar` components,
   wire the layout). Build + svelte-check green; the edit loop is browser-verified.
-- **Vue/Nuxt:** the protocol works today (mount `createCmsApi`, render via
-  `getContent()`); the native Vue editing UI is the same proven recipe — build it
-  when demand warrants a second non-React client, ideally owned by people who
-  live in that ecosystem, published against this protocol as the contract.
+- **Nuxt/Vue: use the native UI now** — `examples/nuxt` is the Vue 3 counterpart
+  at feature parity (mount `createCmsApi` in one Nitro catch-all route, copy the
+  Vue `cmsbar` components, wire `app.vue`). vue-tsc + `nuxt build` green; the edit
+  loop, rich-text toolbar, info list, and every drawer/panel are browser-verified
+  (headless Chromium). Only HTML5 drag-reorder is manual-verify.
 
-The protocol is the stable thing. React was the first UI client, Svelte is the
-second, and this document is the contract any third (Vue) builds against.
+The protocol is the stable thing. React was the first UI client, Svelte the
+second, Vue the third — and this document is the contract any further client
+builds against.
