@@ -6,12 +6,17 @@
 // draft the same elements become editable in place (contenteditable), and
 // typing stages edits the bar can Save.
 //
-// V2 wires text editing only: demo.title + demo.intro go through <T>. The
-// rich-text body and the info list are still read-only here (their editable
-// primitives - RichText, EditableInfoList - arrive in later Vue phases).
+// V2 wired text editing (demo.title + demo.intro through <T>). V3 adds the media
+// primitives: <EditableImage path="demo.image" fill/> (object-cover, draggable
+// focal point) and <EditableMedia path="demo.media"/> (image / video / embed in
+// one slot). The rich-text body and the info list are still read-only here
+// (their editable primitives - RichText, EditableInfoList - arrive in later Vue
+// phases).
 import { getContent } from "@/lib/content";
 import { resolvePageMeta, EMPTY_PAGE_META } from "@/lib/cmsbar/page-meta-core";
 import T from "@/cmsbar/T.vue";
+import EditableImage from "@/cmsbar/EditableImage.vue";
+import EditableMedia from "@/cmsbar/EditableMedia.vue";
 
 const content = getContent();
 
@@ -44,6 +49,19 @@ useHead({
     <p class="site">{{ siteName }}</p>
     <T as="h1" path="demo.title" />
     <T as="p" class="intro" path="demo.intro" />
+
+    <!-- EditableImage: object-cover fill, so editors can drag the focal point.
+         The positioned wrapper gives the absolutely-filled <img> a box. -->
+    <figure class="demo-image">
+      <EditableImage path="demo.image" alt="CMSBar demo image" fill />
+    </figure>
+
+    <!-- EditableMedia: image / video / embed in one slot. The positioned wrapper
+         gives the absolutely-filled media a 16:9 box. -->
+    <div class="demo-media">
+      <EditableMedia path="demo.media" />
+    </div>
+
     <!-- eslint-disable-next-line vue/no-v-html -->
     <div class="body" data-cms-path="demo.body" v-html="demo?.body"></div>
     <ul class="info">
@@ -83,6 +101,23 @@ h1 {
 }
 .intro {
   color: #3f3f46;
+}
+.demo-image {
+  position: relative;
+  margin: 2rem 0 0;
+  width: 100%;
+  aspect-ratio: 1200 / 630;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+.demo-media {
+  position: relative;
+  margin: 1.5rem 0 0;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: #0f172a;
 }
 .body h2 {
   font-size: 1.25rem;
