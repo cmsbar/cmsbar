@@ -11,11 +11,12 @@
     "typecheck": "astro check"
   },
   "dependencies": {
-    "@astrojs/node": "^9",
-    "@astrojs/react": "^4",
-    "astro": "^5",
+    "@astrojs/node": "^10.0.5",
+    "@astrojs/react": "^5",
+    "astro": "^6.4.6",
     "bcryptjs": "^3",
     "clsx": "^2",
+    "cssesc": "^3",
     "lucide-react": "^0.562",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -30,5 +31,8 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vite-tsconfig-paths": "^6"
+  },
+  "engines": {
+    "node": ">=22.12.0"
   }
 }
