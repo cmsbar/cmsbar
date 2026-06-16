@@ -1,11 +1,15 @@
-# CMSBar + SvelteKit example (S0: server + read-only content)
+# CMSBar + SvelteKit example (full native Svelte 5 editing UI)
 
-This example mounts the **framework-neutral CMSBar API** in a SvelteKit app and
-**server-renders the content read-only**. There is no in-place editing UI yet -
-the Svelte editor components are a later phase. S0 proves two things:
+This example mounts the **framework-neutral CMSBar API** in a SvelteKit app,
+server-renders the content, AND ships a **complete native Svelte 5 editing UI**
+at feature parity with the React + Vue clients: in-page bar, editable text /
+rich-text / image / media / info-list primitives, and the Versions / Page-meta /
+Settings / Issues drawers + the opt-in guided tour. It proves three things:
 
 1. The whole CMS API mounts on a SvelteKit endpoint with one call.
 2. The CMSBar content model server-renders through a SvelteKit `load` + page.
+3. The editing UI is a tractable, finite per-framework rewrite over the shared
+   neutral core (this was the first non-React client; the Vue/Nuxt one followed).
 
 ## How it fits together
 
@@ -31,9 +35,12 @@ the host-specific glue is committed.
   the request's `Cookie` header. Same model proven on Next, React Router,
   TanStack Start, Hono, and Astro.
 
-- **SSR content (read-only).** `src/routes/+page.server.ts` calls `getContent()`
-  on the server and `resolvePageMeta()` for head meta; `src/routes/+page.svelte`
-  renders the fields read-only. The content is in the server-rendered HTML.
+- **SSR content + in-place editing.** `src/routes/+page.server.ts` calls
+  `getContent()` on the server and `resolvePageMeta()` for head meta;
+  `src/routes/+page.svelte` renders the fields through the editable primitives -
+  inert in the SSR HTML for anonymous visitors, contenteditable in place once a
+  logged-in editor has an active draft. `+layout.server.ts` seeds the session
+  from the cookie; `+layout.svelte` provides the store + mounts `<CmsBar>`.
 
 - **The `@` alias.** `kit.alias { "@": "./src" }` (in `svelte.config.js`) makes
   the core's internal `@/cms.config`, `@/lib/content`, and `@/lib/cmsbar/*`
@@ -41,14 +48,16 @@ the host-specific glue is committed.
 
 ## What is committed vs assembled
 
-Committed glue: `package.json`, `svelte.config.js`, `vite.config.ts`,
-`tsconfig.json`, `scripts/setup.mjs`, `src/cms.config.ts`,
-`src/content/site-content.json`, `src/app.html`, `src/app.d.ts`,
-`src/routes/+page.server.ts`, `src/routes/+page.svelte`, and
-`src/routes/api/cms/[...path]/+server.ts`.
+Committed glue: the host config (`package.json`, `svelte.config.js`,
+`vite.config.ts`, `tsconfig.json`, `scripts/setup.mjs`); the **native Svelte UI**
+(`src/cmsbar/*.svelte` + the `content.svelte.ts` store + `src/styles/cmsbar.css`);
+the layout/page wiring (`src/routes/+layout.svelte`, `+layout.server.ts`,
+`+page.server.ts`, `+page.svelte`); the API route
+(`src/routes/api/cms/[...path]/+server.ts`); plus `src/cms.config.ts`,
+`src/content/site-content.json`, `src/app.html`, `src/app.d.ts`.
 
-Assembled by `npm run setup` (git-ignored): `src/lib/cmsbar/*`,
-`src/lib/content.ts`.
+Assembled by `npm run setup` (git-ignored): the neutral core `src/lib/cmsbar/*`
+and `src/lib/content.ts`.
 
 ## Run it
 

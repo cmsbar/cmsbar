@@ -5,13 +5,13 @@
 // neutral lib/cmsbar tree is Next-coupled and must NOT be copied:
 //   - lib/cmsbar/page-meta-next.ts  (imports "next")
 //
-// Nuxt V0 is SERVER + READ-ONLY content only: there is NO editing UI yet (the
-// Vue editor components are a later phase). So, like SvelteKit, we copy ONLY the
-// neutral TypeScript - lib/cmsbar/* (handlers, server/router.ts,
-// server/companion.ts, server/http.ts, session.ts, paths.ts, media.ts,
-// config.ts, backend/*, page-meta-core.ts, the content model, etc.) plus
-// lib/content.ts. We do NOT copy components/cmsbar (those are React) and there
-// is no styles copy.
+// The native Vue 3 editing UI ships as committed host glue (cmsbar/*.vue +
+// app.vue + plugins/cmsbar-session.server.ts + assets/styles/cmsbar.css), NOT
+// assembled here. So, like SvelteKit, setup copies ONLY the neutral TypeScript -
+// lib/cmsbar/* (handlers, server/router.ts, server/companion.ts, server/http.ts,
+// session.ts, paths.ts, media.ts, config.ts, backend/*, page-meta-core.ts, the
+// content model, etc.) plus lib/content.ts. We do NOT copy components/cmsbar
+// (those are React).
 //
 // We also do NOT copy the template's app/ tree (Next route handlers / pages):
 // Nuxt mounts the whole API through one Nitro catch-all

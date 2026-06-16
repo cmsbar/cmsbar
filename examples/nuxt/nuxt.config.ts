@@ -1,10 +1,11 @@
-// Nuxt 3 host for CMSBar (V0: server + READ-ONLY content; no editing UI yet).
+// Nuxt 3 host for CMSBar - full native Vue 3 editing UI over the neutral core.
 //
 // The framework-neutral CMSBar core is copied in by `npm run setup` (from
 // ../../template) into lib/cmsbar/* and lib/content.ts at the project root, and
 // is git-ignored - this example never forks the core. The committed glue is the
-// Nitro catch-all (server/routes/api/cms/[...path].ts -> createCmsApi), the SSR
-// page (pages/index.vue reading getContent()), cms.config.ts and
+// Nitro catch-all (server/routes/api/cms/[...path].ts -> createCmsApi), the
+// native Vue 3 editing UI (cmsbar/*.vue + app.vue + the server session plugin),
+// the SSR page (pages/index.vue reading getContent()), cms.config.ts and
 // content/site-content.json.
 //
 // The neutral lib imports itself as "@/lib/cmsbar/..." and the project config as
@@ -39,7 +40,9 @@ export default defineNuxtConfig({
   },
 
   typescript: {
-    // Read-only V0; don't fail the build on type errors in the copied core.
+    // Don't fail `nuxt build` on type errors inside the copied (git-ignored)
+    // core; the host glue is type-checked separately via `npm run typecheck`
+    // (vue-tsc --noEmit).
     typeCheck: false,
   },
 });

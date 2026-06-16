@@ -32,7 +32,7 @@
     "intro": "This heading and paragraph are server-rendered by Nuxt 3 from the framework-neutral content model. pages/index.vue reads getContent() on the server during SSR and renders it - so the content is in the HTML, not assembled by client JS. The whole CMSBar API is mounted at /api/cms/* through a single Nitro catch-all route that forwards the raw web Request to createCmsApi().",
     "image": "/images/demo.svg",
     "media": "https://www.youtube.com/embed/aqz-KE-bpKQ",
-    "body": "<h2>Server protocol, no React</h2><p>This block renders <strong>real content</strong> from the model. The editing UI (the in-page bar, the editable primitives) is a later phase; V0 proves the server half: the neutral lib/cmsbar mounts and content server-renders in Vue.</p>",
+    "body": "<h2>Editable in place, no React</h2><p>This block renders <strong>real content</strong> from the model. Log in via the bar below and it becomes a contenteditable rich-text region - the whole CMSBar UI (bar, editable primitives, drawers) is native Vue 3 over the framework-neutral lib/cmsbar core.</p>",
     "info": [
       { "icon": "Clock", "label": "Hours", "value": "Mon–Fri, 9–17h" },
       { "icon": "MapPin", "label": "Address", "value": "123 Example St" },
