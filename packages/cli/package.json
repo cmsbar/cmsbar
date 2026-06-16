@@ -1,7 +1,7 @@
 {
   "name": "cmsbar",
-  "version": "0.1.0",
-  "description": "CMSBar installer - copies the Git-as-CMS bar into your Next.js repo. You own the code.",
+  "version": "0.2.0",
+  "description": "CMSBar installer - scaffold or add the Git-as-CMS editing bar to your repo (Next.js, React Router 7, TanStack Start, Vite SPA, Astro, SvelteKit, Nuxt). You own the code.",
   "type": "module",
   "author": "Mario Ivančić",
   "license": "MIT",
@@ -21,5 +21,5 @@
   "engines": {
     "node": ">=18"
   },
-  "keywords": ["cms", "git", "nextjs", "inline-editing", "github"]
+  "keywords": ["cms", "git", "github", "inline-editing", "nextjs", "react-router", "tanstack-start", "vite", "astro", "sveltekit", "nuxt"]
 }
