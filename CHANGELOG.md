@@ -45,6 +45,15 @@ every supported host.
   (`lib/cmsbar/utils.ts` — `clsx` + `tailwind-merge`), which cleared a phantom
   `svelte-check` error and dropped two dependencies those projects never used.
 
+### Packaging
+
+- The published `cmsbar` package now **bundles `template/` + `examples/`** (a
+  `prepack` step copies the git-tracked source in; `ROOT` resolves them from the
+  install location), so `cmsbar new` / `cmsbar init` work when installed from
+  npm. 0.1.0 shipped only `bin/` + `package.json`, so the published CLI could not
+  scaffold — **0.2.0 is the first installable release.** Verified by scaffolding
+  + building a project from the packed tarball outside the monorepo.
+
 ## [0.1.0]
 
 Initial release.

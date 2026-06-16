@@ -5,6 +5,10 @@
   "type": "module",
   "author": "Mario Ivančić",
   "license": "MIT",
+  "scripts": {
+    "prepack": "node scripts/prepack.mjs",
+    "postpack": "node scripts/postpack.mjs"
+  },
   "bin": {
     "cmsbar": "bin/cmsbar.mjs"
   },
@@ -17,7 +21,7 @@
   "bugs": {
     "url": "https://github.com/cmsbar/cmsbar/issues"
   },
-  "files": ["bin", "../../template"],
+  "files": ["bin", "template", "examples"],
   "engines": {
     "node": ">=18"
   },

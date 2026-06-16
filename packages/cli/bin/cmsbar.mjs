@@ -24,7 +24,13 @@ import { fileURLToPath } from "node:url";
 import readline from "node:readline/promises";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(__dirname, "../../../"); // monorepo root (bin → cli → packages → root)
+// `template/` and `examples/` are bundled INTO the package on publish (see
+// scripts/prepack.mjs), so when installed from npm they sit at the package root
+// (bin → cli). In the monorepo they live at the repo root (bin → cli → packages
+// → root). Prefer the bundled copy; fall back to the monorepo layout for dev.
+const PKG_ROOT = path.resolve(__dirname, ".."); // packages/cli (or installed pkg root)
+const MONO_ROOT = path.resolve(__dirname, "../../../"); // monorepo root in dev
+const ROOT = fs.existsSync(path.join(PKG_ROOT, "template")) ? PKG_ROOT : MONO_ROOT;
 const TEMPLATE = path.join(ROOT, "template");
 const EXAMPLES = path.join(ROOT, "examples");
 

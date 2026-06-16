@@ -1,0 +1,5 @@
+# Staged on `npm pack` / `npm publish` by scripts/prepack.mjs (the bundled
+# template/ + examples/), removed by postpack.mjs. Never committed.
+/template/
+/examples/
+*.tgz
