@@ -1,6 +1,6 @@
 {
   "name": "cmsbar",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "CMSBar installer - scaffold or add the Git-as-CMS editing bar to your repo (Next.js, React Router 7, TanStack Start, Vite SPA, Astro, SvelteKit, Nuxt). You own the code.",
   "type": "module",
   "author": "Mario Ivančić",

@@ -6,6 +6,29 @@ CLI in `packages/cli`); the editor, neutral core, and per-host examples live in
 this monorepo. This project follows [semantic versioning](https://semver.org);
 pre-1.0, minor versions may add features and the API can still shift.
 
+## [0.2.1] — 2026-06-16
+
+Security patch for the example hosts (the templates `cmsbar new` scaffolds from).
+
+### Security
+
+- **`examples/astro` → Astro 6** (`astro@^6.4.6`, `@astrojs/node@^10.0.5`,
+  `@astrojs/react@^5`), clearing the SSR advisories that have no Astro 5.x
+  backport: Host-header SSRF (CVE-2026-54299, 7.5), reflected XSS via slot name
+  (CVE-2026-50146, 7.1), spread-props XSS (CVE-2026-54298), `define:vars` XSS
+  (CVE-2026-41067), server-island replay (CVE-2026-45028), cache poisoning
+  (CVE-2026-41322), and Server Islands DoS (CVE-2026-29772).
+- **`examples/tanstack-start` → `srvx@^0.11.13`**, clearing the middleware
+  bypass (CVE-2026-33732).
+
+### Changed
+
+- The Astro example now requires **Node ≥ 22.12.0** (Astro 6's floor; it
+  hard-fails on Node 20) and pins **`cssesc`** so the standalone SSR server
+  boots — Astro 6 emits a phantom build-only `import "cssesc"` into the server
+  bundle. Verified: the built server boots under Node 22 and serves the SSR
+  home (editor-gated), `/cmsbar/login`, and `/api/cms/*`.
+
 ## [0.2.0] — 2026-06-16
 
 Framework reach: two native non-React editing UIs, and the CLI now scaffolds
@@ -79,5 +102,6 @@ Initial release.
   straight to the base branch).
 - GitHub storage backend; bcrypt + HMAC-signed-cookie auth, rate-limited login.
 
+[0.2.1]: https://github.com/cmsbar/cmsbar/releases/tag/v0.2.1
 [0.2.0]: https://github.com/cmsbar/cmsbar/releases/tag/v0.2.0
 [0.1.0]: https://github.com/cmsbar/cmsbar/releases/tag/v0.1.0
