@@ -1,16 +1,19 @@
 // Assemble the framework-neutral CMSBar core into this example's src/ tree.
 //
 // The core is the single canonical source at ../../template. We copy it in (we
-// never fork it) so this example always tracks the real core. One file in the
-// neutral lib/cmsbar tree is Next-coupled and must NOT be copied:
+// never fork it) so this example always tracks the real core. Two files in the
+// neutral lib/cmsbar tree are not needed by a non-React host and must NOT be
+// copied:
 //   - lib/cmsbar/page-meta-next.ts  (imports "next")
+//   - lib/cmsbar/utils.ts  (the React-only cn() Tailwind merger: clsx +
+//     tailwind-merge, imported solely by components/cmsbar)
 //
-// SvelteKit S0 is SERVER + READ-ONLY content only: there is NO editing UI yet
-// (the Svelte editor components are a later phase). So unlike the React hosts we
-// copy ONLY the neutral TypeScript - lib/cmsbar/* (handlers, server/router.ts,
-// server/companion.ts, server/http.ts, session.ts, paths.ts, media.ts,
-// config.ts, backend/*, the content model, etc.) plus lib/content.ts. We do NOT
-// copy components/cmsbar (those are React) and there is no styles copy.
+// The native Svelte 5 editing UI ships as committed glue (src/cmsbar/*.svelte +
+// the content.svelte.ts store + src/styles/cmsbar.css), NOT assembled here. So
+// unlike the React hosts we copy ONLY the neutral TypeScript - lib/cmsbar/*
+// (handlers, server/router.ts, server/companion.ts, server/http.ts, session.ts,
+// paths.ts, media.ts, config.ts, backend/*, the content model, etc.) plus
+// lib/content.ts. We do NOT copy components/cmsbar (those are React).
 //
 // We also do NOT copy the template's app/ tree (app/api/cms, app/cmsbar): those
 // are Next route handlers / pages. SvelteKit mounts the whole API through one
@@ -38,8 +41,9 @@ if (!existsSync(template)) {
   process.exit(1);
 }
 
-// Files inside the otherwise-neutral core that are framework-coupled.
-const SKIP = new Set(["page-meta-next.ts"]);
+// Files inside the otherwise-neutral core not needed by a non-React host
+// (page-meta-next.ts imports "next"; utils.ts is the React-only cn() helper).
+const SKIP = new Set(["page-meta-next.ts", "utils.ts"]);
 
 // Copy a directory tree, skipping SKIP entries by basename. Replaces the
 // destination dir so removed core files don't linger between runs.

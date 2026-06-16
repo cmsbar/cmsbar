@@ -94,14 +94,21 @@ framework**; the remaining cost is sync debt keeping the three UIs aligned.
 
 ## 3. Recommendation
 
-- **SvelteKit: use the native UI now** — `examples/sveltekit` is the runnable
-  starting point (mount `createCmsApi`, copy the Svelte `cmsbar` components,
-  wire the layout). Build + svelte-check green; the edit loop is browser-verified.
-- **Nuxt/Vue: use the native UI now** — `examples/nuxt` is the Vue 3 counterpart
-  at feature parity (mount `createCmsApi` in one Nitro catch-all route, copy the
-  Vue `cmsbar` components, wire `app.vue`). vue-tsc + `nuxt build` green; the edit
-  loop, rich-text toolbar, info list, and every drawer/panel are browser-verified
-  (headless Chromium). Only HTML5 drag-reorder is manual-verify.
+- **SvelteKit: use the native UI now** — `cmsbar new <dir> --framework sveltekit`
+  scaffolds it (or `cmsbar init --framework sveltekit` adds it to an existing
+  project); `examples/sveltekit` is the runnable reference. Build + svelte-check
+  green; the edit loop is browser-verified.
+- **Nuxt/Vue: use the native UI now** — `cmsbar new <dir> --framework nuxt`
+  scaffolds it (or `cmsbar init --framework nuxt`); `examples/nuxt` is the Vue 3
+  reference (the whole API mounts in one Nitro catch-all route). vue-tsc +
+  `nuxt build` green; the edit loop, rich-text toolbar, info list, and every
+  drawer/panel are browser-verified (headless Chromium). Only HTML5 drag-reorder
+  is manual-verify.
+
+Both non-React starters scaffold clean: the CLI copies the example's committed
+SFC UI verbatim and assembles only the neutral `lib/cmsbar` core (skipping the
+React component layer and the React-only `cn()` helper), so a freshly scaffolded
+project builds and type-checks green with no phantom dependencies.
 
 The protocol is the stable thing. React was the first UI client, Svelte the
 second, Vue the third — and this document is the contract any further client

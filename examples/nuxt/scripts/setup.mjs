@@ -40,8 +40,11 @@ if (!existsSync(template)) {
   process.exit(1);
 }
 
-// Files inside the otherwise-neutral core that are framework-coupled.
-const SKIP = new Set(["page-meta-next.ts"]);
+// Files inside the otherwise-neutral core not needed by a non-React host:
+//   - page-meta-next.ts imports "next"
+//   - utils.ts is the React-only cn() Tailwind merger (clsx + tailwind-merge),
+//     imported solely by the React components/cmsbar layer.
+const SKIP = new Set(["page-meta-next.ts", "utils.ts"]);
 
 // Copy a directory tree, skipping SKIP entries by basename. Replaces the
 // destination dir so removed core files don't linger between runs.

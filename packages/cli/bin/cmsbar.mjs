@@ -5,12 +5,18 @@
 //   cmsbar new <dir> --framework <fw> [--namespace id]   scaffold a fresh site
 //   cmsbar init [--framework <fw>] [--namespace id] [--dir .]   add to an existing project
 //
-// Frameworks: next | react-router | tanstack-start | vite | astro
+// Frameworks: next | react-router | tanstack-start | vite | astro | sveltekit | nuxt
 //
 // `new` copies a per-framework starter (the host wiring + a demo page) and
 // assembles the framework-neutral CMSBar core into it. `init` drops the core
 // (and, for Next, the route handlers + login page) into a project you already
 // have, then prints the wiring steps.
+//
+// React hosts assemble the React UI (`components/cmsbar`) + theme from the
+// template. The non-React hosts (sveltekit, nuxt) ship their native UI as
+// committed example glue (`*.svelte`/`*.vue` + the store + their own CSS), so for
+// them (`neutralUi: true`) we copy the example's UI as-is and assemble ONLY the
+// neutral TypeScript (`lib/cmsbar` + `lib/content.ts`) — never the React layer.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -63,9 +69,32 @@ const FRAMEWORKS = {
     nextExtras: false,
     config: "src/cms.config.ts",
   },
+  // Non-React hosts: the editing UI is committed example glue (Svelte/Vue SFCs +
+  // their own CSS), so neutralUi=true assembles ONLY the neutral lib core and the
+  // example's UI is copied verbatim.
+  sveltekit: {
+    example: "sveltekit",
+    core: "src",
+    skipNext: true,
+    nextExtras: false,
+    neutralUi: true,
+    config: "src/cms.config.ts",
+  },
+  nuxt: {
+    example: "nuxt",
+    core: ".",
+    skipNext: true,
+    nextExtras: false,
+    neutralUi: true,
+    config: "cms.config.ts",
+  },
 };
 
 const SKIP_NEXT_FILES = new Set(["NextCmsHost.tsx", "page-meta-next.ts"]);
+// utils.ts is the React-only cn() Tailwind class-merger (imported solely by the
+// React components/cmsbar layer); non-React hosts never import it, so skipping it
+// keeps clsx + tailwind-merge out of their dependency surface.
+const SKIP_NEUTRAL_UI_FILES = new Set(["utils.ts"]);
 
 const args = process.argv.slice(2);
 const cmd = args[0];
@@ -136,16 +165,23 @@ function assembleCore(dest, fw, { skipExisting = false } = {}) {
   const m = FRAMEWORKS[fw];
   const base = m.core === "." ? dest : path.join(dest, m.core);
   const skip = m.skipNext ? SKIP_NEXT_FILES : undefined;
+  const libSkip = m.neutralUi
+    ? new Set([...(skip ?? []), ...SKIP_NEUTRAL_UI_FILES])
+    : skip;
   let n = 0;
-  n += copyDir(
-    path.join(TEMPLATE, "components", "cmsbar"),
-    path.join(base, "components", "cmsbar"),
-    { skipBasenames: skip, skipExisting },
-  ).length;
+  // The React UI + theme are template-assembled for React hosts only; the
+  // non-React hosts (neutralUi) ship their own SFC UI + CSS as committed glue.
+  if (!m.neutralUi) {
+    n += copyDir(
+      path.join(TEMPLATE, "components", "cmsbar"),
+      path.join(base, "components", "cmsbar"),
+      { skipBasenames: skip, skipExisting },
+    ).length;
+  }
   n += copyDir(
     path.join(TEMPLATE, "lib", "cmsbar"),
     path.join(base, "lib", "cmsbar"),
-    { skipBasenames: skip, skipExisting },
+    { skipBasenames: libSkip, skipExisting },
   ).length;
   const single = (rel, toRel) => {
     const to = path.join(base, toRel ?? rel);
@@ -155,7 +191,7 @@ function assembleCore(dest, fw, { skipExisting = false } = {}) {
     n++;
   };
   single("lib/content.ts");
-  single("styles/cmsbar.css");
+  if (!m.neutralUi) single("styles/cmsbar.css");
   if (m.nextExtras) {
     n += copyDir(
       path.join(TEMPLATE, "app", "api", "cms"),
@@ -195,6 +231,8 @@ build/
 .next/
 .react-router/
 .astro/
+.svelte-kit/
+.nuxt/
 .output/
 *.tsbuildinfo
 
@@ -245,17 +283,23 @@ function cmdNew() {
     ".next",
     ".react-router",
     ".astro",
+    ".svelte-kit",
+    ".nuxt",
     ".output",
     ".env",
     ".env.local",
     ".gitignore",
     "scripts/setup.mjs",
     "package-lock.json",
-    `${coreRel}components/cmsbar`,
     `${coreRel}lib/cmsbar`,
     `${coreRel}lib/content.ts`,
-    `${coreRel}styles/cmsbar.css`,
   ];
+  // React hosts assemble the component layer + theme from the template, so drop
+  // them from the example copy. neutralUi hosts COMMIT their SFC UI + CSS, so
+  // those must be copied verbatim - don't skip them.
+  if (!m.neutralUi) {
+    skipRel.push(`${coreRel}components/cmsbar`, `${coreRel}styles/cmsbar.css`);
+  }
   if (m.nextExtras) {
     skipRel.push(
       `${coreRel}app/api/cms`,
@@ -333,11 +377,13 @@ function cmdInit() {
   let glue = [];
   if (fw !== "next") {
     const ex = path.join(EXAMPLES, m.example);
-    const hostDir = fs.existsSync(path.join(ex, "app", "cmsbar"))
-      ? path.join(ex, "app", "cmsbar")
-      : fs.existsSync(path.join(ex, "src", "cmsbar"))
-        ? path.join(ex, "src", "cmsbar")
-        : null;
+    // The UI dir lives at app/cmsbar, src/cmsbar, or (Nuxt) cmsbar at the root.
+    const hostDir =
+      [
+        path.join(ex, "app", "cmsbar"),
+        path.join(ex, "src", "cmsbar"),
+        path.join(ex, "cmsbar"),
+      ].find((d) => fs.existsSync(d)) ?? null;
     if (hostDir) {
       glue = copyDir(hostDir, path.join(coreBase, "cmsbar"), {
         skipExisting: true,
@@ -388,18 +434,26 @@ function assembleCoreInto(coreBase, fw) {
   // already resolved the absolute core base, so copy directly into it.
   const m = FRAMEWORKS[fw];
   const skip = m.skipNext ? SKIP_NEXT_FILES : undefined;
+  const libSkip = m.neutralUi
+    ? new Set([...(skip ?? []), ...SKIP_NEUTRAL_UI_FILES])
+    : skip;
   let n = 0;
-  n += copyDir(
-    path.join(TEMPLATE, "components", "cmsbar"),
-    path.join(coreBase, "components", "cmsbar"),
-    { skipBasenames: skip, skipExisting: true },
-  ).length;
+  if (!m.neutralUi) {
+    n += copyDir(
+      path.join(TEMPLATE, "components", "cmsbar"),
+      path.join(coreBase, "components", "cmsbar"),
+      { skipBasenames: skip, skipExisting: true },
+    ).length;
+  }
   n += copyDir(
     path.join(TEMPLATE, "lib", "cmsbar"),
     path.join(coreBase, "lib", "cmsbar"),
-    { skipBasenames: skip, skipExisting: true },
+    { skipBasenames: libSkip, skipExisting: true },
   ).length;
-  for (const [rel] of [["lib/content.ts"], ["styles/cmsbar.css"]]) {
+  const coreSingles = m.neutralUi
+    ? [["lib/content.ts"]]
+    : [["lib/content.ts"], ["styles/cmsbar.css"]];
+  for (const [rel] of coreSingles) {
     const to = path.join(coreBase, rel);
     if (!fs.existsSync(to)) {
       fs.mkdirSync(path.dirname(to), { recursive: true });
