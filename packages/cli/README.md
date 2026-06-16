@@ -91,8 +91,8 @@ with the provider + `<CmsBar/>`) and appends the env keys to `.env.example`.
 ## Links
 
 - **Repo:** https://github.com/cmsbar/cmsbar
-- **Docs:** https://github.com/cmsbar/cmsbar/blob/main/docs/FRAMEWORKS.md ·
-  [PROTOCOL.md](https://github.com/cmsbar/cmsbar/blob/main/docs/PROTOCOL.md)
+- **Docs:** [PROTOCOL.md](https://github.com/cmsbar/cmsbar/blob/main/docs/PROTOCOL.md)
+  (the contract for non-React hosts) · per-host quickstarts in the examples below
 - **Changelog:** https://github.com/cmsbar/cmsbar/blob/main/CHANGELOG.md
 - **Examples:** https://github.com/cmsbar/cmsbar/tree/main/examples (a runnable
   app per host)

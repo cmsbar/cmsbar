@@ -103,8 +103,9 @@ Import the theme once in `app/globals.css`:
 ```
 
 Fill in the env vars (`cmsbar init` appends the block to `.env.example`:
-credentials, session secret, GitHub PAT). Full walkthrough, including the
-PAT scopes and the bcrypt `$`-escaping gotcha: **docs/SETUP.md**.
+credentials, session secret, GitHub PAT — fine-grained, Contents + Pull
+requests, read/write). Gotcha: escape every `$` in `CMS_PASSWORD_HASH` as
+`\$` (dotenv-expand mangles it otherwise).
 
 ## Make something editable
 
@@ -123,7 +124,7 @@ is inferred from the JSON, so the schema follows the file.
 template/    the canonical source `cmsbar init` copies into your project
 packages/cli the installer
 tests/       vitest suite for the core (paths, session, media allowlists)
-docs/        SETUP.md (full guide) · PLAN.md (productization roadmap)
+docs/        PROTOCOL.md (the non-React host contract)
 ```
 
 ## Development
@@ -139,7 +140,7 @@ Extracted from a production deployment (kidsenglishacademy.hr) where it runs
 daily. Decoupling status: config layer ✔ · theming ✔ · namespace isolation ✔ ·
 storage seam interface defined (`lib/cmsbar/backend/types.ts`), GitHub is the
 reference adapter; a `fileAdapter` for offline dev, additional framework
-hosts, and the hosted control plane are tracked in **docs/PLAN.md**.
+hosts, and the hosted control plane are on the roadmap.
 
 ## License
 

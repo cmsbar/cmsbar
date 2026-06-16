@@ -3,7 +3,7 @@
 > **Status (2026-06-14): the server protocol works today AND two full native
 > non-React UIs now ship** — Svelte 5 in [`examples/sveltekit`](../examples/sveltekit)
 > and Vue 3 in [`examples/nuxt`](../examples/nuxt), both at feature parity with
-> the React UI and browser-verified. Companion to [FRAMEWORKS.md](./FRAMEWORKS.md).
+> the React UI and browser-verified.
 > For React hosts (Next, React Router, TanStack Start, Vite, Astro) use the thin
 > adapters + `cmsbar` CLI — this doc is for hosts whose UI is **not** React.
 

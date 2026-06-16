@@ -4,3 +4,10 @@ node_modules/
 coverage/
 .env*
 !.env.example
+
+# Internal-only docs — kept on disk for the team, never committed to this
+# PUBLIC repo (productization strategy, the full manual-setup guide, and the
+# framework audit which carries internal strategy). PROTOCOL.md stays public.
+docs/PLAN.md
+docs/SETUP.md
+docs/FRAMEWORKS.md

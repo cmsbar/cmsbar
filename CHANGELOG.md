@@ -36,8 +36,8 @@ every supported host.
   `"static"`) — the media rules, filesystem listing, and image proxy resolve
   correctly per host.
 - The handler-level test harness is now **156 tests**.
-- `docs/FRAMEWORKS.md` and the marketing site mark SvelteKit/Nuxt as shipped and
-  the CLI as covering all seven hosts.
+- The marketing site marks SvelteKit/Nuxt as shipped and the CLI as covering all
+  seven hosts.
 
 ### Fixed
 
