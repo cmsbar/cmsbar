@@ -17,7 +17,7 @@
     "url": "git+https://github.com/cmsbar/cmsbar.git",
     "directory": "packages/cli"
   },
-  "homepage": "https://github.com/cmsbar/cmsbar#readme",
+  "homepage": "https://cmsbar.com",
   "bugs": {
     "url": "https://github.com/cmsbar/cmsbar/issues"
   },

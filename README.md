@@ -10,6 +10,8 @@ vendor lock-in, and you own every line of the code.
 npx cmsbar init
 ```
 
+**[cmsbar.com](https://cmsbar.com)** · **[Live playground](https://playground.cmsbar.com)** · **[Docs](https://cmsbar.com/docs)** · **[npm](https://www.npmjs.com/package/cmsbar)**
+
 ## Why
 
 - **Your repo is the CMS.** Content is a JSON file in the repo. Drafts are
